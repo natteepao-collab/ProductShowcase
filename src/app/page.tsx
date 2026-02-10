@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, ChangeEvent } from 'react';
+import Image from 'next/image';
 import {
   Plus,
   Trash2,
@@ -33,11 +34,14 @@ interface Product {
 // --- Components ---
 
 const ProductCard = ({ product }: { product: Product }) => {
+  const [copied, setCopied] = useState(false);
+
   const copyToClipboard = () => {
-    // Logic to copy link
+    if (typeof window === 'undefined') return;
     const shareUrl = `${window.location.origin}${window.location.pathname}?item=${product.id}`;
     navigator.clipboard.writeText(shareUrl).then(() => {
-      // toast will be handled by parent if needed, or simple alert for now
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     });
   };
 
@@ -45,11 +49,27 @@ const ProductCard = ({ product }: { product: Product }) => {
     <div className="bg-white rounded-[20px] overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col h-full group">
       {/* Image Area */}
       <div className="relative aspect-[4/3] bg-gray-50 flex items-center justify-center overflow-hidden">
-        <img
-          src={product.image}
-          alt={product.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-        />
+        {product.image.startsWith('http') ? (
+          <Image
+            src={product.image}
+            alt={product.name}
+            fill
+            className="object-cover group-hover:scale-105 transition-transform duration-500"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          />
+        ) : (
+          <img
+            src={product.image}
+            alt={product.name}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+        )}
+        <button
+          onClick={copyToClipboard}
+          className="absolute top-2 right-2 p-2 bg-white/80 backdrop-blur-sm rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"
+        >
+          {copied ? <CheckCircle2 size={16} className="text-green-600" /> : <Share2 size={16} className="text-gray-600" />}
+        </button>
       </div>
 
       {/* Content Area */}
@@ -215,16 +235,6 @@ const App = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900 pb-20">
-      {/* Toast Notification */}
-      {showToast && (
-        <div className="fixed top-20 right-4 z-[100] animate-in slide-in-from-right duration-300">
-          <div className="bg-green-600 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3">
-            <CheckCircle2 size={20} />
-            <span className="font-bold">คัดลอกลิงก์สำเร็จ!</span>
-          </div>
-        </div>
-      )}
-
       {/* Header */}
       <header className="bg-white border-b sticky top-0 z-50 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -269,7 +279,13 @@ const App = () => {
                     <div className="relative group cursor-pointer border-2 border-dashed border-gray-200 rounded-2xl overflow-hidden hover:border-red-400 transition-colors bg-gray-50 h-48 flex flex-col items-center justify-center">
                       <input type="file" onChange={(e) => handleImageUpload(e, true)} className="absolute inset-0 opacity-0 cursor-pointer z-10" accept="image/*" />
                       {singleProduct.image ? (
-                        <img src={singleProduct.image} className="w-full h-full object-cover" />
+                        singleProduct.image.startsWith('data:') ? (
+                          <img src={singleProduct.image} alt={singleProduct.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="relative w-full h-full">
+                            <Image src={singleProduct.image} alt={singleProduct.name} fill className="object-cover" />
+                          </div>
+                        )
                       ) : (
                         <div className="text-gray-400 flex flex-col items-center"><Camera size={24} /><span className="text-xs mt-1">อัปโหลดรูป</span></div>
                       )}
@@ -303,7 +319,13 @@ const App = () => {
                     <div className="w-24 h-24 flex-shrink-0 relative group cursor-pointer border-2 border-dashed border-gray-200 rounded-xl overflow-hidden hover:border-red-400 transition-colors bg-gray-50 flex flex-col items-center justify-center">
                       <input type="file" onChange={(e) => handleImageUpload(e, false)} className="absolute inset-0 opacity-0 cursor-pointer z-10" accept="image/*" />
                       {newGroupProduct.image ? (
-                        <img src={newGroupProduct.image} className="w-full h-full object-cover" />
+                        newGroupProduct.image.startsWith('data:') ? (
+                          <img src={newGroupProduct.image} alt={newGroupProduct.name || 'New'} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="relative w-full h-full">
+                            <Image src={newGroupProduct.image} alt={newGroupProduct.name || 'New'} fill className="object-cover" />
+                          </div>
+                        )
                       ) : (
                         <Camera size={20} className="text-gray-400" />
                       )}
@@ -328,7 +350,13 @@ const App = () => {
                   <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                     {groupProducts.map(p => (
                       <div key={p.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
-                        <img src={p.image} className="w-12 h-12 rounded-lg object-cover" />
+                        <div className="relative w-12 h-12 flex-shrink-0">
+                          {p.image.startsWith('http') ? (
+                            <Image src={p.image} alt={p.name} fill className="rounded-lg object-cover" />
+                          ) : (
+                            <img src={p.image} alt={p.name} className="w-full h-full rounded-lg object-cover" />
+                          )}
+                        </div>
                         <div className="flex-1 min-w-0">
                           <h4 className="font-bold text-sm truncate">{p.name}</h4>
                           <p className="text-red-500 text-xs">{p.price}</p>
