@@ -392,10 +392,12 @@ const App = () => {
             {/* 2. Group Product Section (Grid/Scroll) */}
             <section>
               <div
-                className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+                className="flex sm:grid overflow-x-auto sm:overflow-x-visible gap-4 sm:gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 pb-6 sm:pb-0 snap-x snap-mandatory no-scrollbar px-4 sm:px-0"
               >
                 {groupProducts.map(p => (
-                  <ProductCard key={p.id} product={p} />
+                  <div key={p.id} className="min-w-[42%] sm:min-w-0 snap-start">
+                    <ProductCard product={p} />
+                  </div>
                 ))}
               </div>
             </section>
@@ -409,6 +411,8 @@ const App = () => {
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -webkit-overflow-scrolling: touch; -ms-overflow-style: none; scrollbar-width: none; }
       `}} />
     </div>
   );
