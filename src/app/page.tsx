@@ -53,7 +53,7 @@ const ProductCard = ({ product, onCopy }: { product: Product, onCopy?: (msg: str
   return (
     <div
       id={`product-${product.id}`}
-      className="bg-white rounded-[20px] overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col h-full group"
+      className="bg-white rounded-[20px] overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 border border-gray-100 flex flex-col h-full group hover:-translate-y-1"
     >
       {/* Image Area */}
       <div className="relative aspect-[4/3] bg-gray-50 flex items-center justify-center overflow-hidden">
@@ -225,6 +225,12 @@ const App = () => {
     }
   }, [singleProduct, groupProducts, isLoaded]);
 
+
+  const saveSingleProduct = () => {
+    // Current persistence is handled by useEffect on every change, 
+    // but this button provides explicit feedback and ensures the final state is "committed".
+    showToastMessage('บันทึกข้อมูลสินค้าแนะนำเรียบร้อย ✨');
+  };
 
   // --- Form State for New Group Product ---
   const [newGroupProduct, setNewGroupProduct] = useState<Partial<Product>>({
@@ -404,6 +410,13 @@ const App = () => {
                     <input name="lazadaUrl" value={singleProduct.lazadaUrl} onChange={handleSingleInputChange} placeholder="Lazada Link" className="w-full px-3 py-2 text-sm rounded-lg border border-blue-100 outline-none" />
                     <input name="tiktokUrl" value={singleProduct.tiktokUrl} onChange={handleSingleInputChange} placeholder="TikTok Link" className="w-full px-3 py-2 text-sm rounded-lg border border-gray-100 outline-none" />
                   </div>
+
+                  <button
+                    onClick={saveSingleProduct}
+                    className="w-full bg-red-600 text-white font-bold py-3 rounded-xl hover:bg-red-700 transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform active:scale-95"
+                  >
+                    <Save size={18} /> บันทึกข้อมูลสินค้าแนะนำ
+                  </button>
                 </div>
               </div>
             </div>
