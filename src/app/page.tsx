@@ -1,65 +1,389 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import React, { useState, useRef, ChangeEvent } from 'react';
+import {
+  Plus,
+  Trash2,
+  ShoppingBag,
+  Layout,
+  Share2,
+  CheckCircle2,
+  Camera,
+  Edit,
+  Save,
+  Star,
+  Flame
+} from 'lucide-react';
+
+// --- Types ---
+interface Product {
+  id: number;
+  image: string;
+  name: string;
+  desc: string;
+  price: string;
+  shopeeUrl: string;
+  lazadaUrl: string;
+  tiktokUrl: string;
+  sold?: string;
+  rating?: string;
+  reviews?: string;
+}
+
+// --- Components ---
+
+const ProductCard = ({ product }: { product: Product }) => {
+  const copyToClipboard = () => {
+    // Logic to copy link
+    const shareUrl = `${window.location.origin}${window.location.pathname}?item=${product.id}`;
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      // toast will be handled by parent if needed, or simple alert for now
+    });
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="bg-white rounded-[20px] overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col h-full group">
+      {/* Image Area */}
+      <div className="relative aspect-[4/3] bg-gray-50 flex items-center justify-center overflow-hidden">
+        <img
+          src={product.image}
+          alt={product.name}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+      </div>
+
+      {/* Content Area */}
+      <div className="p-4 flex flex-col flex-1">
+        <h3 className="font-bold text-gray-900 text-lg leading-tight mb-1 line-clamp-2">
+          {product.name}
+        </h3>
+        <p className="text-gray-500 text-xs mb-3 line-clamp-2 h-8">
+          {product.desc}
+        </p>
+
+        <div className="mt-auto">
+          <p className="text-[#4ade80] font-bold text-xl mb-3">
+            {product.price} บาท
           </p>
+
+          <div className="flex items-center gap-2">
+            {product.shopeeUrl && (
+              <a
+                href={product.shopeeUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="flex-1 bg-[#EE4D2D] text-white text-[10px] md:text-xs font-bold py-2 px-2 rounded-full text-center hover:opacity-90 transition-opacity shadow-sm"
+              >
+                Shopee
+              </a>
+            )}
+            {product.lazadaUrl && (
+              <a
+                href={product.lazadaUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="flex-1 bg-[#101566] text-white text-[10px] md:text-xs font-bold py-2 px-2 rounded-full text-center hover:opacity-90 transition-opacity shadow-sm"
+              >
+                Lazada
+              </a>
+            )}
+            {product.tiktokUrl && (
+              <a
+                href={product.tiktokUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="flex-1 bg-black text-white text-[10px] md:text-xs font-bold py-2 px-2 rounded-full text-center hover:opacity-90 transition-opacity shadow-sm"
+              >
+                Tiktok
+              </a>
+            )}
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      </div>
     </div>
   );
-}
+};
+
+// Helper for image upload (moved outside to avoid recreation)
+const readFile = (file: File): Promise<string> => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.readAsDataURL(file);
+  });
+};
+
+const App = () => {
+  // --- State ---
+  const [isEditMode, setIsEditMode] = useState(true);
+  const [showToast, setShowToast] = useState(false);
+
+  // 1. Single Product State
+  const [singleProduct, setSingleProduct] = useState<Product>({
+    id: 999,
+    image: 'https://images.unsplash.com/photo-1541781777631-fa9531908431?w=600&q=80',
+    name: 'Single Product Showcase',
+    desc: 'รายละเอียดสินค้าแบบเดี่ยว แนะนำสินค้าไฮไลท์',
+    price: '990.00',
+    shopeeUrl: 'https://shopee.co.th',
+    lazadaUrl: 'https://lazada.co.th',
+    tiktokUrl: 'https://tiktok.com'
+  });
+
+  // 2. Group Products State
+  const [groupProducts, setGroupProducts] = useState<Product[]>([
+    {
+      id: 1,
+      image: 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=400&q=80',
+      name: 'Royal Canin Mini Adult 8+',
+      desc: 'สำหรับสุนัขสูงวัยพันธุ์เล็ก 8 ปีขึ้นไป 8kg.',
+      price: '1,760.00',
+      shopeeUrl: 'https://shopee.co.th',
+      lazadaUrl: 'https://lazada.co.th',
+      tiktokUrl: 'https://tiktok.com',
+    },
+    {
+      id: 2,
+      image: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=400&q=80',
+      name: 'Royal Canin Kitten',
+      desc: 'อาหารเม็ดลูกแมว อายุ 4-12 เดือน 4 kg',
+      price: '1,230.00',
+      shopeeUrl: 'https://shopee.co.th',
+      lazadaUrl: 'https://lazada.co.th',
+      tiktokUrl: 'https://tiktok.com',
+    },
+    {
+      id: 3,
+      image: 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=400&q=80',
+      name: 'Royal Canin Mini Adult 8+',
+      desc: 'สำหรับสุนัขสูงวัยพันธุ์เล็ก 8 ปีขึ้นไป 8kg.',
+      price: '1,760.00',
+      shopeeUrl: 'https://shopee.co.th',
+      lazadaUrl: 'https://lazada.co.th',
+      tiktokUrl: 'https://tiktok.com',
+    }
+  ]);
+
+  // --- Form State for New Group Product ---
+  const [newGroupProduct, setNewGroupProduct] = useState<Partial<Product>>({
+    image: '', name: '', desc: '', price: '', shopeeUrl: '', lazadaUrl: '', tiktokUrl: ''
+  });
+
+  // --- Handlers ---
+
+  const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>, isSingle: boolean = false) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const result = await readFile(file);
+      if (isSingle) {
+        setSingleProduct(prev => ({ ...prev, image: result }));
+      } else {
+        setNewGroupProduct(prev => ({ ...prev, image: result }));
+      }
+    }
+  };
+
+  const handleSingleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setSingleProduct(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleGroupInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setNewGroupProduct(prev => ({ ...prev, [name]: value }));
+  };
+
+  const addGroupProduct = () => {
+    if (!newGroupProduct.name || !newGroupProduct.price) return;
+    const item: Product = {
+      ...newGroupProduct as Product,
+      id: Date.now(),
+      sold: '0',
+      rating: '5/5',
+      reviews: '0'
+    };
+    setGroupProducts([...groupProducts, item]);
+    setNewGroupProduct({
+      image: '', name: '', desc: '', price: '', shopeeUrl: '', lazadaUrl: '', tiktokUrl: ''
+    });
+  };
+
+  const deleteGroupProduct = (id: number) => {
+    setGroupProducts(groupProducts.filter(p => p.id !== id));
+  };
+
+
+  return (
+    <div className="min-h-screen bg-gray-50 font-sans text-gray-900 pb-20">
+      {/* Toast Notification */}
+      {showToast && (
+        <div className="fixed top-20 right-4 z-[100] animate-in slide-in-from-right duration-300">
+          <div className="bg-green-600 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3">
+            <CheckCircle2 size={20} />
+            <span className="font-bold">คัดลอกลิงก์สำเร็จ!</span>
+          </div>
+        </div>
+      )}
+
+      {/* Header */}
+      <header className="bg-white border-b sticky top-0 z-50 shadow-sm">
+        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center text-white shadow-lg">
+              <ShoppingBag size={24} />
+            </div>
+            <h1 className="font-bold text-xl tracking-tight hidden sm:block">Product<span className="text-red-600">Showcase</span></h1>
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              onClick={() => setIsEditMode(true)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${isEditMode ? 'bg-red-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            >
+              <Layout size={18} /> จัดการ
+            </button>
+            <button
+              onClick={() => setIsEditMode(false)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${!isEditMode ? 'bg-red-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            >
+              <Share2 size={18} /> หน้าพรีวิว
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-6xl mx-auto px-4 py-8">
+        {isEditMode ? (
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* --- Left Column: Single Product Edit --- */}
+            <div className="space-y-6">
+              <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                <h2 className="text-lg font-bold mb-4 flex items-center gap-2 border-b pb-3 text-red-600">
+                  <Edit size={20} /> แก้ไขสินค้าแนะนำ (Product Single)
+                </h2>
+
+                <div className="space-y-4">
+                  {/* Image Upload */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-400 uppercase mb-1">รูปสินค้า</label>
+                    <div className="relative group cursor-pointer border-2 border-dashed border-gray-200 rounded-2xl overflow-hidden hover:border-red-400 transition-colors bg-gray-50 h-48 flex flex-col items-center justify-center">
+                      <input type="file" onChange={(e) => handleImageUpload(e, true)} className="absolute inset-0 opacity-0 cursor-pointer z-10" accept="image/*" />
+                      {singleProduct.image ? (
+                        <img src={singleProduct.image} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="text-gray-400 flex flex-col items-center"><Camera size={24} /><span className="text-xs mt-1">อัปโหลดรูป</span></div>
+                      )}
+                    </div>
+                  </div>
+
+                  <input name="name" value={singleProduct.name} onChange={handleSingleInputChange} placeholder="ชื่อสินค้า" className="w-full px-4 py-3 rounded-xl border border-gray-100 focus:ring-2 focus:ring-red-500 outline-none" />
+                  <textarea name="desc" value={singleProduct.desc} onChange={handleSingleInputChange} placeholder="รายละเอียด" className="w-full px-4 py-3 rounded-xl border border-gray-100 focus:ring-2 focus:ring-red-500 outline-none h-20 resize-none" />
+                  <input name="price" value={singleProduct.price} onChange={handleSingleInputChange} placeholder="ราคา" className="w-full px-4 py-3 rounded-xl border border-gray-100 focus:ring-2 focus:ring-red-500 outline-none" />
+
+                  <div className="space-y-2 pt-2 border-t">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase">ลิ้งก์ร้านค้า</p>
+                    <input name="shopeeUrl" value={singleProduct.shopeeUrl} onChange={handleSingleInputChange} placeholder="Shopee Link" className="w-full px-3 py-2 text-sm rounded-lg border border-orange-100 outline-none" />
+                    <input name="lazadaUrl" value={singleProduct.lazadaUrl} onChange={handleSingleInputChange} placeholder="Lazada Link" className="w-full px-3 py-2 text-sm rounded-lg border border-blue-100 outline-none" />
+                    <input name="tiktokUrl" value={singleProduct.tiktokUrl} onChange={handleSingleInputChange} placeholder="TikTok Link" className="w-full px-3 py-2 text-sm rounded-lg border border-gray-100 outline-none" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* --- Right Column: Group Product Manage --- */}
+            <div className="space-y-6">
+              <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                <h2 className="text-lg font-bold mb-4 flex items-center gap-2 border-b pb-3 text-red-600">
+                  <Plus size={20} /> เพิ่มสินค้ากลุ่ม (Group Product)
+                </h2>
+
+                <div className="space-y-4">
+                  {/* Simple Add Form */}
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="w-24 h-24 flex-shrink-0 relative group cursor-pointer border-2 border-dashed border-gray-200 rounded-xl overflow-hidden hover:border-red-400 transition-colors bg-gray-50 flex flex-col items-center justify-center">
+                      <input type="file" onChange={(e) => handleImageUpload(e, false)} className="absolute inset-0 opacity-0 cursor-pointer z-10" accept="image/*" />
+                      {newGroupProduct.image ? (
+                        <img src={newGroupProduct.image} className="w-full h-full object-cover" />
+                      ) : (
+                        <Camera size={20} className="text-gray-400" />
+                      )}
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      <input name="name" value={newGroupProduct.name} onChange={handleGroupInputChange} placeholder="ชื่อสินค้า" className="w-full px-3 py-2 rounded-lg border border-gray-100 text-sm" />
+                      <input name="price" value={newGroupProduct.price} onChange={handleGroupInputChange} placeholder="ราคา" className="w-full px-3 py-2 rounded-lg border border-gray-100 text-sm" />
+                      <div className="flex gap-2">
+                        <input name="shopeeUrl" value={newGroupProduct.shopeeUrl} onChange={handleGroupInputChange} placeholder="Shopee" className="w-full px-2 py-1 text-xs rounded border border-gray-100" />
+                        <input name="lazadaUrl" value={newGroupProduct.lazadaUrl} onChange={handleGroupInputChange} placeholder="Lazada" className="w-full px-2 py-1 text-xs rounded border border-gray-100" />
+                        <input name="tiktokUrl" value={newGroupProduct.tiktokUrl} onChange={handleGroupInputChange} placeholder="TikTok" className="w-full px-2 py-1 text-xs rounded border border-gray-100" />
+                      </div>
+                    </div>
+                  </div>
+                  <button onClick={addGroupProduct} className="w-full bg-gray-900 text-white font-bold py-3 rounded-xl hover:bg-black transition-all">
+                    เพิ่มสินค้าในกลุ่ม
+                  </button>
+                </div>
+
+                <div className="mt-8">
+                  <h3 className="text-sm font-bold text-gray-500 mb-3 uppercase">รายการสินค้าในกลุ่ม ({groupProducts.length})</h3>
+                  <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                    {groupProducts.map(p => (
+                      <div key={p.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                        <img src={p.image} className="w-12 h-12 rounded-lg object-cover" />
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-bold text-sm truncate">{p.name}</h4>
+                          <p className="text-red-500 text-xs">{p.price}</p>
+                        </div>
+                        <button onClick={() => deleteGroupProduct(p.id)} className="p-2 text-gray-400 hover:text-red-600">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* --- PREVIEW MODE --- */
+          <div className="space-y-12 pb-20">
+
+            {/* 1. Single Product Section */}
+            <section className="flex justify-center">
+              <div className="w-full max-w-sm sm:max-w-md">
+                <ProductCard product={singleProduct} />
+              </div>
+            </section>
+
+            {/* Divider */}
+            <div className="flex items-center gap-4 max-w-lg mx-auto">
+              <div className="h-px bg-gray-200 flex-1"></div>
+              <span className="text-gray-400 text-sm font-medium">สินค้าอื่นๆ ที่แนะนำ</span>
+              <div className="h-px bg-gray-200 flex-1"></div>
+            </div>
+
+            {/* 2. Group Product Section (Grid/Scroll) */}
+            <section>
+              <div
+                className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+              >
+                {groupProducts.map(p => (
+                  <ProductCard key={p.id} product={p} />
+                ))}
+              </div>
+            </section>
+
+          </div>
+        )}
+      </main>
+
+      <style dangerouslySetInnerHTML={{
+        __html: `
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+      `}} />
+    </div>
+  );
+};
+
+export default App;
