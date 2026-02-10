@@ -208,6 +208,13 @@ const App = () => {
     const savedGroup = localStorage.getItem('groupProducts');
     if (savedSingle) setSingleProduct(JSON.parse(savedSingle));
     if (savedGroup) setGroupProducts(JSON.parse(savedGroup));
+
+    // Check for deep-link on start - if exists, enter preview mode automatically
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('item')) {
+      setIsEditMode(false);
+    }
+
     setIsLoaded(true);
   }, []);
 
@@ -225,24 +232,26 @@ const App = () => {
   });
 
   useEffect(() => {
-    if (isLoaded && !isEditMode) {
+    if (isLoaded) {
       const urlParams = new URLSearchParams(window.location.search);
       const itemId = urlParams.get('item');
-      if (itemId) {
+      if (itemId && !isEditMode) {
         const idNum = parseInt(itemId);
-        setFocusedProductId(idNum);
+        if (!isNaN(idNum)) {
+          setFocusedProductId(idNum);
 
-        setTimeout(() => {
-          const element = document.getElementById(`product-${itemId}`);
-          if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            element.classList.add('ring-4', 'ring-red-500/20', 'scale-105');
-            setTimeout(() => {
-              element.classList.remove('ring-4', 'ring-red-500/20', 'scale-105');
-            }, 3000);
-          }
-        }, 500);
-      } else {
+          setTimeout(() => {
+            const element = document.getElementById(`product-${itemId}`);
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              element.classList.add('ring-4', 'ring-red-500/20', 'scale-105');
+              setTimeout(() => {
+                element.classList.remove('ring-4', 'ring-red-500/20', 'scale-105');
+              }, 3000);
+            }
+          }, 500);
+        }
+      } else if (!itemId) {
         setFocusedProductId(null);
       }
     }
