@@ -16,7 +16,8 @@ import {
   Flame,
   X,
   Edit3,
-  AlertCircle
+  AlertCircle,
+  ChevronLeft
 } from 'lucide-react';
 
 // --- Types ---
@@ -36,7 +37,7 @@ interface Product {
 
 // --- Components ---
 
-const ProductCard = ({ product }: { product: Product }) => {
+const ProductCard = ({ product, onCopy }: { product: Product, onCopy?: (msg: string) => void }) => {
   const [copied, setCopied] = useState(false);
 
   const copyToClipboard = () => {
@@ -44,12 +45,16 @@ const ProductCard = ({ product }: { product: Product }) => {
     const shareUrl = `${window.location.origin}${window.location.pathname}?item=${product.id}`;
     navigator.clipboard.writeText(shareUrl).then(() => {
       setCopied(true);
+      if (onCopy) onCopy('คัดลอกลิงก์สินค้าเรียบร้อย ✨');
       setTimeout(() => setCopied(false), 2000);
     });
   };
 
   return (
-    <div className="bg-white rounded-[20px] overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col h-full group">
+    <div
+      id={`product-${product.id}`}
+      className="bg-white rounded-[20px] overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100 flex flex-col h-full group"
+    >
       {/* Image Area */}
       <div className="relative aspect-[4/3] bg-gray-50 flex items-center justify-center overflow-hidden">
         {product.image.startsWith('http') ? (
@@ -147,6 +152,7 @@ const App = () => {
   const [editingProductId, setEditingProductId] = useState<number | null>(null);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [focusedProductId, setFocusedProductId] = useState<number | null>(null);
 
   // 1. Single Product State
   const [singleProduct, setSingleProduct] = useState<Product>({
@@ -217,6 +223,30 @@ const App = () => {
   const [newGroupProduct, setNewGroupProduct] = useState<Partial<Product>>({
     image: '', name: '', desc: '', price: '', shopeeUrl: '', lazadaUrl: '', tiktokUrl: ''
   });
+
+  useEffect(() => {
+    if (isLoaded && !isEditMode) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const itemId = urlParams.get('item');
+      if (itemId) {
+        const idNum = parseInt(itemId);
+        setFocusedProductId(idNum);
+
+        setTimeout(() => {
+          const element = document.getElementById(`product-${itemId}`);
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            element.classList.add('ring-4', 'ring-red-500/20', 'scale-105');
+            setTimeout(() => {
+              element.classList.remove('ring-4', 'ring-red-500/20', 'scale-105');
+            }, 3000);
+          }
+        }, 500);
+      } else {
+        setFocusedProductId(null);
+      }
+    }
+  }, [isLoaded, isEditMode]);
 
   // --- Handlers ---
 
@@ -330,38 +360,35 @@ const App = () => {
 
       <main className="max-w-6xl mx-auto px-4 py-8">
         {isEditMode ? (
-          <div className="grid md:grid-cols-2 gap-8">
-            {/* --- Left Column: Single Product Edit --- */}
+          /* --- ADMIN MODE --- */
+          <div className="grid md:grid-cols-2 gap-8 animate-in fade-in duration-500">
+            {/* Left Column: Single Product Edit */}
             <div className="space-y-6">
               <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
                 <h2 className="text-lg font-bold mb-4 flex items-center gap-2 border-b pb-3 text-red-600">
                   <Edit size={20} /> แก้ไขสินค้าแนะนำ (Product Single)
                 </h2>
-
                 <div className="space-y-4">
-                  {/* Image Upload */}
                   <div>
                     <label className="block text-xs font-bold text-gray-400 uppercase mb-1">รูปสินค้า</label>
                     <div className="relative group cursor-pointer border-2 border-dashed border-gray-200 rounded-2xl overflow-hidden hover:border-red-400 transition-colors bg-gray-50 h-48 flex flex-col items-center justify-center">
                       <input type="file" onChange={(e) => handleImageUpload(e, true)} className="absolute inset-0 opacity-0 cursor-pointer z-10" accept="image/*" />
                       {singleProduct.image ? (
-                        singleProduct.image.startsWith('data:') ? (
-                          <img src={singleProduct.image} alt={singleProduct.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="relative w-full h-full">
+                        <div className="relative w-full h-full">
+                          {singleProduct.image.startsWith('data:') ? (
+                            <img src={singleProduct.image} alt={singleProduct.name} className="w-full h-full object-cover" />
+                          ) : (
                             <Image src={singleProduct.image} alt={singleProduct.name} fill className="object-cover" />
-                          </div>
-                        )
+                          )}
+                        </div>
                       ) : (
                         <div className="text-gray-400 flex flex-col items-center"><Camera size={24} /><span className="text-xs mt-1">อัปโหลดรูป</span></div>
                       )}
                     </div>
                   </div>
-
                   <input name="name" value={singleProduct.name} onChange={handleSingleInputChange} placeholder="ชื่อสินค้า" className="w-full px-4 py-3 rounded-xl border border-gray-100 focus:ring-2 focus:ring-red-500 outline-none" />
                   <textarea name="desc" value={singleProduct.desc} onChange={handleSingleInputChange} placeholder="รายละเอียด" className="w-full px-4 py-3 rounded-xl border border-gray-100 focus:ring-2 focus:ring-red-500 outline-none h-20 resize-none" />
                   <input name="price" value={singleProduct.price} onChange={handleSingleInputChange} placeholder="ราคา" className="w-full px-4 py-3 rounded-xl border border-gray-100 focus:ring-2 focus:ring-red-500 outline-none" />
-
                   <div className="space-y-2 pt-2 border-t">
                     <p className="text-[10px] font-bold text-gray-400 uppercase">ลิ้งก์ร้านค้า</p>
                     <input name="shopeeUrl" value={singleProduct.shopeeUrl} onChange={handleSingleInputChange} placeholder="Shopee Link" className="w-full px-3 py-2 text-sm rounded-lg border border-orange-100 outline-none" />
@@ -372,26 +399,24 @@ const App = () => {
               </div>
             </div>
 
-            {/* --- Right Column: Group Product Manage --- */}
+            {/* Right Column: Group Product Manage */}
             <div className="space-y-6">
               <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
                 <h2 className="text-lg font-bold mb-4 flex items-center gap-2 border-b pb-3 text-red-600">
                   <Plus size={20} /> เพิ่มสินค้ากลุ่ม (Group Product)
                 </h2>
-
                 <div className="space-y-4">
-                  {/* Simple Add Form */}
                   <div className="flex flex-col sm:flex-row gap-4">
                     <div className="w-24 h-24 flex-shrink-0 relative group cursor-pointer border-2 border-dashed border-gray-200 rounded-xl overflow-hidden hover:border-red-400 transition-colors bg-gray-50 flex flex-col items-center justify-center">
                       <input type="file" onChange={(e) => handleImageUpload(e, false)} className="absolute inset-0 opacity-0 cursor-pointer z-10" accept="image/*" />
                       {newGroupProduct.image ? (
-                        newGroupProduct.image.startsWith('data:') ? (
-                          <img src={newGroupProduct.image} alt={newGroupProduct.name || 'New'} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="relative w-full h-full">
-                            <Image src={newGroupProduct.image} alt={newGroupProduct.name || 'New'} fill className="object-cover" />
-                          </div>
-                        )
+                        <div className="relative w-full h-full">
+                          {newGroupProduct.image.startsWith('data:') ? (
+                            <img src={newGroupProduct.image} alt="New" className="w-full h-full object-cover" />
+                          ) : (
+                            <Image src={newGroupProduct.image} alt="New" fill className="object-cover" />
+                          )}
+                        </div>
                       ) : (
                         <Camera size={20} className="text-gray-400" />
                       )}
@@ -436,7 +461,7 @@ const App = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                           <h4 className="font-bold text-sm truncate">{p.name}</h4>
-                          <p className="text-red-500 text-xs">{p.price}</p>
+                          <p className="text-red-500 text-xs">{p.price} บาท</p>
                         </div>
                         <div className="flex gap-1">
                           <button onClick={() => startEditing(p)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors" title="แก้ไข">
@@ -453,49 +478,73 @@ const App = () => {
               </div>
             </div>
           </div>
+        ) : focusedProductId ? (
+          /* --- FOCUSED MODE: Isolated Item --- */
+          <div className="max-w-md mx-auto py-10 space-y-8 animate-in fade-in zoom-in duration-500">
+            <button
+              onClick={() => {
+                window.history.pushState({}, '', window.location.pathname);
+                setFocusedProductId(null);
+              }}
+              className="flex items-center gap-2 text-gray-500 hover:text-red-600 font-medium transition-colors mb-4"
+            >
+              <ChevronLeft size={20} /> ดูสินค้าทั้งหมด
+            </button>
+            <div className="shadow-2xl rounded-[20px] ring-1 ring-gray-100 overflow-hidden transform scale-105">
+              {singleProduct.id === focusedProductId ? (
+                <ProductCard product={singleProduct} onCopy={showToastMessage} />
+              ) : (
+                groupProducts.find(p => p.id === focusedProductId) ? (
+                  <ProductCard product={groupProducts.find(p => p.id === focusedProductId)!} onCopy={showToastMessage} />
+                ) : (
+                  <div className="text-center py-20 bg-white rounded-3xl border border-gray-100 flex flex-col items-center">
+                    <AlertCircle size={48} className="text-gray-200 mb-4" />
+                    <p className="text-gray-500 font-medium">ไม่พบสินค้าที่ต้องการ</p>
+                    <button onClick={() => setFocusedProductId(null)} className="mt-6 bg-red-600 text-white px-6 py-2 rounded-full text-sm font-bold shadow-md hover:bg-red-700 transition-all">กลับสู่หน้าหลัก</button>
+                  </div>
+                )
+              )}
+            </div>
+          </div>
         ) : (
-          /* --- PREVIEW MODE --- */
-          <div className="space-y-12 pb-20">
-
+          /* --- PREVIEW MODE: Full Showcase --- */
+          <div className="space-y-12 pb-20 animate-in fade-in duration-500">
             {/* 1. Single Product Section */}
-            <section className="flex justify-center">
+            <section className="flex justify-center px-4 sm:px-0">
               <div className="w-full max-w-sm sm:max-w-md">
-                <ProductCard product={singleProduct} />
+                <ProductCard product={singleProduct} onCopy={showToastMessage} />
               </div>
             </section>
 
             {/* Divider */}
-            <div className="flex items-center gap-4 max-w-lg mx-auto">
+            <div className="flex items-center gap-4 max-w-lg mx-auto px-4 sm:px-0">
               <div className="h-px bg-gray-200 flex-1"></div>
-              <span className="text-gray-400 text-sm font-medium">สินค้าอื่นๆ ที่แนะนำ</span>
+              <span className="text-gray-400 text-sm font-bold uppercase tracking-widest px-2 text-center">สินค้าแนะนำอื่นๆ</span>
               <div className="h-px bg-gray-200 flex-1"></div>
             </div>
 
-            {/* 2. Group Product Section (Grid/Scroll) */}
+            {/* 2. Group Product Section */}
             <section>
-              <div
-                className="flex sm:grid overflow-x-auto sm:overflow-x-visible gap-4 sm:gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 pb-6 sm:pb-0 snap-x snap-mandatory no-scrollbar px-4 sm:px-0"
-              >
+              <div className="flex sm:grid overflow-x-auto sm:overflow-x-visible gap-4 sm:gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 pb-8 sm:pb-0 snap-x snap-mandatory no-scrollbar px-4 sm:px-0">
                 {groupProducts.map(p => (
                   <div key={p.id} className="min-w-[45%] sm:min-w-0 snap-start">
-                    <ProductCard product={p} />
+                    <ProductCard product={p} onCopy={showToastMessage} />
                   </div>
                 ))}
               </div>
             </section>
-
           </div>
         )}
       </main>
 
       <style dangerouslySetInnerHTML={{
         __html: `
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -webkit-overflow-scrolling: touch; -ms-overflow-style: none; scrollbar-width: none; }
-      `}} />
+          .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+          .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+          .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+          .no-scrollbar::-webkit-scrollbar { display: none; }
+          .no-scrollbar { -webkit-overflow-scrolling: touch; -ms-overflow-style: none; scrollbar-width: none; }
+        `}} />
 
       {/* Toast Notification */}
       {showToast && (
