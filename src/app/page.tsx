@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, ChangeEvent } from 'react';
+import React, { useState, useEffect, useRef, ChangeEvent } from 'react';
 import Image from 'next/image';
 import {
   Plus,
@@ -13,7 +13,10 @@ import {
   Edit,
   Save,
   Star,
-  Flame
+  Flame,
+  X,
+  Edit3,
+  AlertCircle
 } from 'lucide-react';
 
 // --- Types ---
@@ -86,13 +89,18 @@ const ProductCard = ({ product }: { product: Product }) => {
             {product.price} บาท
           </p>
 
-          <div className="flex items-center gap-2">
+          <div className={`grid gap-1 ${[product.shopeeUrl, product.lazadaUrl, product.tiktokUrl].filter(Boolean).length === 3
+            ? 'grid-cols-3'
+            : [product.shopeeUrl, product.lazadaUrl, product.tiktokUrl].filter(Boolean).length === 2
+              ? 'grid-cols-2'
+              : 'grid-cols-1'
+            }`}>
             {product.shopeeUrl && (
               <a
                 href={product.shopeeUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="flex-1 bg-[#EE4D2D] text-white text-[10px] md:text-xs font-bold py-2 px-2 rounded-full text-center hover:opacity-90 transition-opacity shadow-sm"
+                className="bg-[#EE4D2D] text-white text-[8px] md:text-xs font-bold py-1.5 px-0.5 rounded-full text-center hover:opacity-90 transition-opacity shadow-sm"
               >
                 Shopee
               </a>
@@ -102,7 +110,7 @@ const ProductCard = ({ product }: { product: Product }) => {
                 href={product.lazadaUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="flex-1 bg-[#101566] text-white text-[10px] md:text-xs font-bold py-2 px-2 rounded-full text-center hover:opacity-90 transition-opacity shadow-sm"
+                className="bg-[#101566] text-white text-[8px] md:text-xs font-bold py-1.5 px-0.5 rounded-full text-center hover:opacity-90 transition-opacity shadow-sm"
               >
                 Lazada
               </a>
@@ -112,7 +120,7 @@ const ProductCard = ({ product }: { product: Product }) => {
                 href={product.tiktokUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="flex-1 bg-black text-white text-[10px] md:text-xs font-bold py-2 px-2 rounded-full text-center hover:opacity-90 transition-opacity shadow-sm"
+                className="bg-black text-white text-[8px] md:text-xs font-bold py-1.5 px-0.5 rounded-full text-center hover:opacity-90 transition-opacity shadow-sm"
               >
                 Tiktok
               </a>
@@ -136,7 +144,9 @@ const readFile = (file: File): Promise<string> => {
 const App = () => {
   // --- State ---
   const [isEditMode, setIsEditMode] = useState(true);
+  const [editingProductId, setEditingProductId] = useState<number | null>(null);
   const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
 
   // 1. Single Product State
   const [singleProduct, setSingleProduct] = useState<Product>({
@@ -170,19 +180,38 @@ const App = () => {
       price: '1,230.00',
       shopeeUrl: 'https://shopee.co.th',
       lazadaUrl: 'https://lazada.co.th',
-      tiktokUrl: 'https://tiktok.com',
+      tiktokUrl: '',
     },
     {
       id: 3,
-      image: 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=400&q=80',
-      name: 'Royal Canin Mini Adult 8+',
-      desc: 'สำหรับสุนัขสูงวัยพันธุ์เล็ก 8 ปีขึ้นไป 8kg.',
-      price: '1,760.00',
+      image: 'https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=400&q=80',
+      name: 'SmartHeart Chicken',
+      desc: 'อาหารสุนัข รสไก่และไข่ 3kg',
+      price: '590.00',
       shopeeUrl: 'https://shopee.co.th',
-      lazadaUrl: 'https://lazada.co.th',
-      tiktokUrl: 'https://tiktok.com',
+      lazadaUrl: '',
+      tiktokUrl: '',
     }
   ]);
+
+  // --- Persistence & Initial Load ---
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    const savedSingle = localStorage.getItem('singleProduct');
+    const savedGroup = localStorage.getItem('groupProducts');
+    if (savedSingle) setSingleProduct(JSON.parse(savedSingle));
+    if (savedGroup) setGroupProducts(JSON.parse(savedGroup));
+    setIsLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem('singleProduct', JSON.stringify(singleProduct));
+      localStorage.setItem('groupProducts', JSON.stringify(groupProducts));
+    }
+  }, [singleProduct, groupProducts, isLoaded]);
+
 
   // --- Form State for New Group Product ---
   const [newGroupProduct, setNewGroupProduct] = useState<Partial<Product>>({
@@ -214,15 +243,45 @@ const App = () => {
   };
 
   const addGroupProduct = () => {
-    if (!newGroupProduct.name || !newGroupProduct.price) return;
-    const item: Product = {
-      ...newGroupProduct as Product,
-      id: Date.now(),
-      sold: '0',
-      rating: '5/5',
-      reviews: '0'
-    };
-    setGroupProducts([...groupProducts, item]);
+    if (!newGroupProduct.name || !newGroupProduct.price) {
+      showToastMessage('กรุณากรอกชื่อและราคาให้ครบถ้วน');
+      return;
+    }
+
+    if (editingProductId !== null) {
+      // Update
+      setGroupProducts(groupProducts.map(p =>
+        p.id === editingProductId ? { ...p, ...newGroupProduct as Product } : p
+      ));
+      setEditingProductId(null);
+      showToastMessage('อัปเดตข้อมูลสำเร็จ ✨');
+    } else {
+      // Create
+      const item: Product = {
+        ...newGroupProduct as Product,
+        id: Date.now(),
+        sold: '0',
+        rating: '5/5',
+        reviews: '0'
+      };
+      setGroupProducts([...groupProducts, item]);
+      showToastMessage('เพิ่มสินค้าใหม่สำเร็จ ✨');
+    }
+
+    setNewGroupProduct({
+      image: '', name: '', desc: '', price: '', shopeeUrl: '', lazadaUrl: '', tiktokUrl: ''
+    });
+  };
+
+  const startEditing = (product: Product) => {
+    setEditingProductId(product.id);
+    setNewGroupProduct({ ...product });
+    // Scroll to form for better UX
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const cancelEditing = () => {
+    setEditingProductId(null);
     setNewGroupProduct({
       image: '', name: '', desc: '', price: '', shopeeUrl: '', lazadaUrl: '', tiktokUrl: ''
     });
@@ -230,6 +289,13 @@ const App = () => {
 
   const deleteGroupProduct = (id: number) => {
     setGroupProducts(groupProducts.filter(p => p.id !== id));
+    showToastMessage('ลบสินค้าเรียบร้อย');
+  };
+
+  const showToastMessage = (msg: string) => {
+    setToastMessage(msg);
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 3000);
   };
 
 
@@ -340,9 +406,20 @@ const App = () => {
                       </div>
                     </div>
                   </div>
-                  <button onClick={addGroupProduct} className="w-full bg-gray-900 text-white font-bold py-3 rounded-xl hover:bg-black transition-all">
-                    เพิ่มสินค้าในกลุ่ม
-                  </button>
+                  {editingProductId !== null ? (
+                    <div className="flex gap-2">
+                      <button onClick={addGroupProduct} className="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-2">
+                        <Save size={18} /> บันทึกการแก้ไข
+                      </button>
+                      <button onClick={cancelEditing} className="w-1/3 bg-gray-100 text-gray-600 font-bold py-3 rounded-xl hover:bg-gray-200 transition-all flex items-center justify-center gap-2">
+                        <X size={18} /> ยกเลิก
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={addGroupProduct} className="w-full bg-gray-900 text-white font-bold py-3 rounded-xl hover:bg-black transition-all flex items-center justify-center gap-2">
+                      <Plus size={18} /> เพิ่มสินค้าในกลุ่ม
+                    </button>
+                  )}
                 </div>
 
                 <div className="mt-8">
@@ -361,9 +438,14 @@ const App = () => {
                           <h4 className="font-bold text-sm truncate">{p.name}</h4>
                           <p className="text-red-500 text-xs">{p.price}</p>
                         </div>
-                        <button onClick={() => deleteGroupProduct(p.id)} className="p-2 text-gray-400 hover:text-red-600">
-                          <Trash2 size={16} />
-                        </button>
+                        <div className="flex gap-1">
+                          <button onClick={() => startEditing(p)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors" title="แก้ไข">
+                            <Edit3 size={16} />
+                          </button>
+                          <button onClick={() => deleteGroupProduct(p.id)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="ลบ">
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -395,7 +477,7 @@ const App = () => {
                 className="flex sm:grid overflow-x-auto sm:overflow-x-visible gap-4 sm:gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 pb-6 sm:pb-0 snap-x snap-mandatory no-scrollbar px-4 sm:px-0"
               >
                 {groupProducts.map(p => (
-                  <div key={p.id} className="min-w-[42%] sm:min-w-0 snap-start">
+                  <div key={p.id} className="min-w-[45%] sm:min-w-0 snap-start">
                     <ProductCard product={p} />
                   </div>
                 ))}
@@ -414,6 +496,16 @@ const App = () => {
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -webkit-overflow-scrolling: touch; -ms-overflow-style: none; scrollbar-width: none; }
       `}} />
+
+      {/* Toast Notification */}
+      {showToast && (
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-bottom-5">
+          <div className="bg-gray-900 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-gray-800">
+            <CheckCircle2 size={20} className="text-green-400" />
+            <span className="text-sm font-bold tracking-wide">{toastMessage}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
