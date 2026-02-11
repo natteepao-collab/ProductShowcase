@@ -360,6 +360,25 @@ const App = () => {
     });
   };
 
+  const copySocialShareLink = (product: Product) => {
+    // Pack data into Base64 for OG generation and dynamic view
+    const productData = {
+      image: product.image,
+      name: product.name,
+      desc: product.desc,
+      price: product.price,
+      shopeeUrl: product.shopeeUrl,
+      lazadaUrl: product.lazadaUrl,
+      tiktokUrl: product.tiktokUrl
+    };
+    const base64Data = btoa(unescape(encodeURIComponent(JSON.stringify(productData))));
+    const shareUrl = `${window.location.origin}/product?data=${base64Data}`;
+
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      showToastMessage('คัดลอกลิงก์สำหรับแชร์โซเชียลเรียบร้อย (มีรูปพรีวิว) 🚀');
+    });
+  };
+
   const copyProductLink = (product: Product) => {
     const shareUrl = `${window.location.origin}${window.location.pathname}?item=${product.id}`;
     navigator.clipboard.writeText(shareUrl).then(() => {
@@ -621,6 +640,9 @@ const App = () => {
                           <p className="text-[#10b981] font-black text-[10px]">{p.price} บาท</p>
                         </div>
                         <div className="flex gap-1">
+                          <button onClick={() => copySocialShareLink(p)} className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="ลิงก์แชร์โซเชียล (มีรูป)">
+                            <Share2 size={14} />
+                          </button>
                           <button onClick={() => copyIndividualHTML(p)} className="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors" title="คัดลอก HTML">
                             <Code size={14} />
                           </button>
