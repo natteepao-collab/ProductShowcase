@@ -160,10 +160,12 @@ const App = () => {
   const [focusedProductId, setFocusedProductId] = useState<number | null>(null);
   const [reviewedProducts, setReviewedProducts] = useState<Product[]>([]);
   const [isEmbed, setIsEmbed] = useState(false);
+  const [embedShow, setEmbedShow] = useState<string | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     setIsEmbed(params.get('embed') === 'true');
+    setEmbedShow(params.get('show'));
   }, []);
 
   // 1. Single Product State
@@ -282,11 +284,12 @@ const App = () => {
     }
   }, [isLoaded, viewMode]);
 
-  const copyEmbedCode = () => {
-    const embedUrl = `${window.location.origin}${window.location.pathname}?embed=true`;
-    const iframeCode = `<iframe src="${embedUrl}" width="100%" height="600" frameborder="0" style="border:none; overflow:hidden;" scrolling="no"></iframe>`;
+  const copyEmbedCode = (section: 'all' | 'single' | 'group' | 'review' = 'all') => {
+    const embedUrl = `${window.location.origin}${window.location.pathname}?embed=true${section !== 'all' ? `&show=${section}` : ''}`;
+    const iframeCode = `<iframe src="${embedUrl}" width="100%" height="${section === 'single' ? '450' : '650'}" frameborder="0" style="border:none; overflow:hidden;" scrolling="no"></iframe>`;
     navigator.clipboard.writeText(iframeCode).then(() => {
-      showToastMessage('คัดลอก Embed Code เรียบร้อย 🚀 นำไปวางในหน้าบทความได้เลย');
+      const sectionName = section === 'single' ? 'เฉพาะสินค้าไฮไลท์' : section === 'group' ? 'เฉพาะกลุ่มสินค้า' : section === 'review' ? 'เฉพาะหน้ารีวิว' : 'ทั้งหมด';
+      showToastMessage(`คัดลอก Embed Code (${sectionName}) เรียบร้อย 🚀`);
     });
   };
 
@@ -418,10 +421,10 @@ const App = () => {
                     <Edit size={20} /> แก้ไขสินค้าแนะนำ (Single)
                   </h2>
                   <button
-                    onClick={copyEmbedCode}
+                    onClick={() => copyEmbedCode('single')}
                     className="text-[10px] font-bold bg-gray-900 text-white px-3 py-1 rounded-full flex items-center gap-1 hover:bg-black transition-all"
                   >
-                    <Share2 size={12} /> คัดลอก Embed Code
+                    <Share2 size={12} /> คัดลอก Embed เฉพาะส่วนนี้
                   </button>
                 </div>
                 <div className="space-y-4">
@@ -465,9 +468,17 @@ const App = () => {
             {/* Right Column: Group Product Manage */}
             <div className="space-y-6">
               <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                <h2 className="text-lg font-bold mb-4 flex items-center gap-2 border-b pb-3 text-red-600">
-                  <Plus size={20} /> เพิ่มสินค้ากลุ่ม (Group Product)
-                </h2>
+                <div className="flex items-center justify-between mb-4 border-b pb-3">
+                  <h2 className="text-lg font-bold flex items-center gap-2 text-red-600">
+                    <Plus size={20} /> เพิ่มสินค้ากลุ่ม (Group)
+                  </h2>
+                  <button
+                    onClick={() => copyEmbedCode('group')}
+                    className="text-[10px] font-bold bg-gray-900 text-white px-3 py-1 rounded-full flex items-center gap-1 hover:bg-black transition-all"
+                  >
+                    <Share2 size={12} /> คัดลอก Embed เฉพาะส่วนนี้
+                  </button>
+                </div>
                 <div className="space-y-4">
                   <div className="flex flex-col sm:flex-row gap-4">
                     <div className="w-24 h-24 flex-shrink-0 relative group cursor-pointer border-2 border-dashed border-gray-200 rounded-xl overflow-hidden hover:border-red-400 transition-colors bg-gray-50 flex flex-col items-center justify-center">
@@ -544,9 +555,17 @@ const App = () => {
         ) : viewMode === 'review' ? (
           /* --- REVIEW MODE --- */
           <div className="space-y-8 animate-in fade-in duration-500">
-            <div className="text-center space-y-2">
+            <div className="text-center space-y-2 relative">
               <h2 className="text-3xl font-black text-gray-900">หน้ารีวิวสินค้า</h2>
               <p className="text-gray-500">รวมสินค้าแนะนำที่บันทึกไว้ทั้งหมด</p>
+              {!isEmbed && (
+                <button
+                  onClick={() => copyEmbedCode('review')}
+                  className="absolute top-0 right-0 text-[10px] font-bold bg-gray-900 text-white px-4 py-2 rounded-full flex items-center gap-1 hover:bg-black transition-all shadow-md"
+                >
+                  <Share2 size={14} /> คัดลอก Embed หน้ารีวิว
+                </button>
+              )}
             </div>
 
             {reviewedProducts.length > 0 ? (
@@ -617,29 +636,35 @@ const App = () => {
           /* --- PREVIEW MODE: Full Showcase --- */
           <div className="space-y-12 pb-20 animate-in fade-in duration-500">
             {/* 1. Single Product Section */}
-            <section className="flex justify-center px-4 sm:px-0">
-              <div className="w-full max-w-sm sm:max-w-md">
-                <ProductCard product={singleProduct} onCopy={showToastMessage} />
-              </div>
-            </section>
+            {(!embedShow || embedShow === 'single') && (
+              <section className="flex justify-center px-4 sm:px-0">
+                <div className="w-full max-w-sm sm:max-w-md">
+                  <ProductCard product={singleProduct} onCopy={showToastMessage} />
+                </div>
+              </section>
+            )}
 
             {/* Divider */}
-            <div className="flex items-center gap-4 max-w-lg mx-auto px-4 sm:px-0">
-              <div className="h-px bg-gray-200 flex-1"></div>
-              <span className="text-gray-400 text-sm font-bold uppercase tracking-widest px-2 text-center">สินค้าแนะนำอื่นๆ</span>
-              <div className="h-px bg-gray-200 flex-1"></div>
-            </div>
+            {(!embedShow) && (
+              <div className="flex items-center gap-4 max-w-lg mx-auto px-4 sm:px-0">
+                <div className="h-px bg-gray-200 flex-1"></div>
+                <span className="text-gray-400 text-sm font-bold uppercase tracking-widest px-2 text-center">สินค้าแนะนำอื่นๆ</span>
+                <div className="h-px bg-gray-200 flex-1"></div>
+              </div>
+            )}
 
             {/* 2. Group Product Section */}
-            <section>
-              <div className="flex sm:grid overflow-x-auto sm:overflow-x-visible gap-4 sm:gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 pb-8 sm:pb-0 snap-x snap-mandatory no-scrollbar px-4 sm:px-0">
-                {groupProducts.map(p => (
-                  <div key={p.id} className="min-w-[45%] sm:min-w-0 snap-start">
-                    <ProductCard product={p} onCopy={showToastMessage} />
-                  </div>
-                ))}
-              </div>
-            </section>
+            {(!embedShow || embedShow === 'group') && (
+              <section>
+                <div className="flex sm:grid overflow-x-auto sm:overflow-x-visible gap-4 sm:gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 pb-8 sm:pb-0 snap-x snap-mandatory no-scrollbar px-4 sm:px-0">
+                  {groupProducts.map(p => (
+                    <div key={p.id} className="min-w-[45%] sm:min-w-0 snap-start">
+                      <ProductCard product={p} onCopy={showToastMessage} />
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
         )}
       </main>
