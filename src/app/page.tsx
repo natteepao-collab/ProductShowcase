@@ -17,7 +17,9 @@ import {
   X,
   Edit3,
   AlertCircle,
-  ChevronLeft
+  ChevronLeft,
+  Code,
+  Layers
 } from 'lucide-react';
 
 // --- Types ---
@@ -56,8 +58,8 @@ const ProductCard = ({ product, onCopy }: { product: Product, onCopy?: (msg: str
       className="bg-white rounded-[32px] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col h-full group hover:-translate-y-1"
     >
       {/* Image Area */}
-      <div className="relative aspect-square p-4 bg-white flex items-center justify-center overflow-hidden">
-        <div className="relative w-full h-full rounded-3xl overflow-hidden">
+      <div className="relative aspect-square bg-gray-50 overflow-hidden">
+        <div className="relative w-full h-full">
           {product.image.startsWith('http') ? (
             <Image
               src={product.image}
@@ -83,34 +85,34 @@ const ProductCard = ({ product, onCopy }: { product: Product, onCopy?: (msg: str
       </div>
 
       {/* Content Area */}
-      <div className="px-6 pb-6 pt-2 flex flex-col flex-1">
-        <h3 className="font-black text-gray-900 text-xl leading-tight mb-2 line-clamp-2 min-h-[3rem]">
+      <div className="px-5 pb-5 pt-1 flex flex-col flex-1">
+        <h3 className="font-black text-gray-900 text-[22px] leading-tight mb-1.5 line-clamp-2 min-h-[3rem]">
           {product.name}
         </h3>
-        <p className="text-gray-400 text-sm mb-4 line-clamp-2 h-10 leading-relaxed">
+        <p className="text-gray-500 text-[13px] mb-4 line-clamp-2 h-9 leading-snug">
           {product.desc}
         </p>
 
         <div className="mt-auto space-y-4">
-          <div className="flex flex-col">
+          <div className="flex items-baseline gap-2">
             <span className="text-[#4ade80] font-black text-3xl leading-none">
               {product.price}
             </span>
-            <span className="text-[#4ade80] font-bold text-xl mt-1">
+            <span className="text-[#4ade80] font-black text-xl">
               บาท
             </span>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5">
             {product.shopeeUrl && (
               <a
                 href={product.shopeeUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="w-10 h-10 bg-[#EE4D2D] text-white rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-sm"
+                className="px-3 py-1 bg-[#EE4D2D] text-white rounded-full flex items-center justify-center hover:scale-105 transition-transform shadow-sm min-w-[65px]"
                 title="Shopee"
               >
-                <span className="text-[10px] font-black italic">Shopee</span>
+                <span className="text-[11px] font-black italic">Shopee</span>
               </a>
             )}
             {product.lazadaUrl && (
@@ -118,10 +120,10 @@ const ProductCard = ({ product, onCopy }: { product: Product, onCopy?: (msg: str
                 href={product.lazadaUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="w-10 h-10 bg-[#101566] text-white rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-sm"
+                className="px-3 py-1 bg-[#101566] text-white rounded-full flex items-center justify-center hover:scale-105 transition-transform shadow-sm min-w-[65px]"
                 title="Lazada"
               >
-                <span className="text-[10px] font-black italic">Laz</span>
+                <span className="text-[11px] font-black italic">Lazada</span>
               </a>
             )}
             {product.tiktokUrl && (
@@ -129,10 +131,10 @@ const ProductCard = ({ product, onCopy }: { product: Product, onCopy?: (msg: str
                 href={product.tiktokUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-sm"
+                className="px-3 py-1 bg-black text-white rounded-full flex items-center justify-center hover:scale-105 transition-transform shadow-sm min-w-[65px]"
                 title="Tiktok"
               >
-                <span className="text-[10px] font-black italic">Tik</span>
+                <span className="text-[11px] font-black italic">Tiktok</span>
               </a>
             )}
           </div>
@@ -142,7 +144,6 @@ const ProductCard = ({ product, onCopy }: { product: Product, onCopy?: (msg: str
   );
 };
 
-// Helper for image upload (moved outside to avoid recreation)
 const readFile = (file: File): Promise<string> => {
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -151,16 +152,43 @@ const readFile = (file: File): Promise<string> => {
   });
 };
 
+const compressImage = (base64Str: string, maxWidth = 800, maxHeight = 800, quality = 0.8): Promise<string> => {
+  return new Promise((resolve) => {
+    const img = document.createElement('img');
+    img.src = base64Str;
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let width = img.width;
+      let height = img.height;
+
+      if (width > height) {
+        if (width > maxWidth) {
+          height *= maxWidth / width;
+          width = maxWidth;
+        }
+      } else {
+        if (height > maxHeight) {
+          width *= maxHeight / height;
+          height = maxHeight;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx?.drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+  });
+};
+
 const App = () => {
   // --- State ---
   const [viewMode, setViewMode] = useState<'admin' | 'preview' | 'review'>('admin');
-  const [editingProductId, setEditingProductId] = useState<number | null>(null);
-  const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
-  const [focusedProductId, setFocusedProductId] = useState<number | null>(null);
   const [reviewedProducts, setReviewedProducts] = useState<Product[]>([]);
   const [isEmbed, setIsEmbed] = useState(false);
   const [embedShow, setEmbedShow] = useState<string | null>(null);
+  const [editingSingleId, setEditingSingleId] = useState<number | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -168,16 +196,22 @@ const App = () => {
     setEmbedShow(params.get('show'));
   }, []);
 
-  // 1. Single Product State
-  const [singleProduct, setSingleProduct] = useState<Product>({
-    id: 999,
-    image: 'https://images.unsplash.com/photo-1541781777631-fa9531908431?w=600&q=80',
-    name: 'Single Product Showcase',
-    desc: 'รายละเอียดสินค้าแบบเดี่ยว แนะนำสินค้าไฮไลท์',
-    price: '990.00',
-    shopeeUrl: 'https://shopee.co.th',
-    lazadaUrl: 'https://lazada.co.th',
-    tiktokUrl: 'https://tiktok.com'
+  // 1. Single Product State (List)
+  const [singleProducts, setSingleProducts] = useState<Product[]>([
+    {
+      id: 999,
+      image: 'https://images.unsplash.com/photo-1541781777631-fa9531908431?w=600&q=80',
+      name: 'Highlight Product Showcase',
+      desc: 'รายละเอียดสินค้าแบบไฮไลท์ จัดการแยกเป็นรายการได้แล้ว',
+      price: '990.00',
+      shopeeUrl: 'https://shopee.co.th',
+      lazadaUrl: 'https://lazada.co.th',
+      tiktokUrl: 'https://tiktok.com'
+    }
+  ]);
+
+  const [newSingleProduct, setNewSingleProduct] = useState<Partial<Product>>({
+    image: '', name: '', desc: '', price: '', shopeeUrl: '', lazadaUrl: '', tiktokUrl: ''
   });
 
   // 2. Group Products State
@@ -218,10 +252,10 @@ const App = () => {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    const savedSingle = localStorage.getItem('singleProduct');
+    const savedSingle = localStorage.getItem('singleProducts');
     const savedGroup = localStorage.getItem('groupProducts');
     const savedReviewed = localStorage.getItem('reviewedProducts');
-    if (savedSingle) setSingleProduct(JSON.parse(savedSingle));
+    if (savedSingle) setSingleProducts(JSON.parse(savedSingle));
     if (savedGroup) setGroupProducts(JSON.parse(savedGroup));
     if (savedReviewed) setReviewedProducts(JSON.parse(savedReviewed));
 
@@ -236,21 +270,27 @@ const App = () => {
 
   useEffect(() => {
     if (isLoaded) {
-      localStorage.setItem('singleProduct', JSON.stringify(singleProduct));
-      localStorage.setItem('groupProducts', JSON.stringify(groupProducts));
-      localStorage.setItem('reviewedProducts', JSON.stringify(reviewedProducts));
+      try {
+        localStorage.setItem('singleProducts', JSON.stringify(singleProducts));
+        localStorage.setItem('groupProducts', JSON.stringify(groupProducts));
+        localStorage.setItem('reviewedProducts', JSON.stringify(reviewedProducts));
+      } catch (e) {
+        if (e instanceof Error && e.name === 'QuotaExceededError') {
+          showToastMessage('🚨 พื้นที่จัดเก็บเต็ม! กรุณาลบบางรายการออกเพื่อให้บันทึกต่อได้');
+        }
+      }
     }
-  }, [singleProduct, groupProducts, reviewedProducts, isLoaded]);
+  }, [singleProducts, groupProducts, reviewedProducts, isLoaded]);
 
 
-  const saveSingleProduct = () => {
+  const saveToReview = (product: Product) => {
     // Append to reviewed products
     const newReviewedItem: Product = {
-      ...singleProduct,
-      id: Date.now(),
+      ...product,
+      id: Date.now() + Math.random(), // Unique ID for review list
     };
     setReviewedProducts(prev => [newReviewedItem, ...prev]);
-    showToastMessage('บันทึกข้อมูลสินค้าแนะนำลงในหน้ารีวิวเรียบร้อย ✨');
+    showToastMessage('บันทึกข้อมูลสินค้าลงในหน้ารีวิวเรียบร้อย ✨');
   };
 
   // --- Form State for New Group Product ---
@@ -284,30 +324,108 @@ const App = () => {
     }
   }, [isLoaded, viewMode]);
 
-  const copyEmbedCode = (section: 'all' | 'single' | 'group' | 'review' = 'all') => {
-    const embedUrl = `${window.location.origin}${window.location.pathname}?embed=true${section !== 'all' ? `&show=${section}` : ''}`;
-    const iframeCode = `<iframe src="${embedUrl}" width="100%" height="${section === 'single' ? '450' : '650'}" frameborder="0" style="border:none; overflow:hidden;" scrolling="no"></iframe>`;
-    navigator.clipboard.writeText(iframeCode).then(() => {
-      const sectionName = section === 'single' ? 'เฉพาะสินค้าไฮไลท์' : section === 'group' ? 'เฉพาะกลุ่มสินค้า' : section === 'review' ? 'เฉพาะหน้ารีวิว' : 'ทั้งหมด';
-      showToastMessage(`คัดลอก Embed Code (${sectionName}) เรียบร้อย 🚀`);
+
+
+  const generateStandaloneCardHTML = (product: Product) => {
+    return `
+<div style="font-family: 'Inter', sans-serif; background: white; border-radius: 32px; overflow: hidden; box-shadow: 0 4px 20px -2px rgba(0,0,0,0.05); border: 1px solid #f3f4f6; display: flex; flex-direction: column; height: 100%; transition: transform 0.3s ease; max-width: 400px; margin: 0 auto;">
+  <div style="position: relative; aspect-ratio: 1/1; padding: 24px; background: white; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+    <div style="position: relative; width: 100%; height: 100%; border-radius: 24px; overflow: hidden;">
+      <img src="${product.image}" alt="${product.name}" style="width: 100%; height: 100%; object-fit: cover;" />
+    </div>
+  </div>
+  <div style="padding: 4px 20px 24px 20px; display: flex; flex-direction: column; flex: 1;">
+    <h3 style="font-weight: 900; color: #111827; font-size: 22px; line-height: 1.25; margin: 0 0 6px 0; min-height: 2.5em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${product.name}</h3>
+    <p style="color: #6b7280; font-size: 13px; line-height: 1.4; margin: 0 0 16px 0; height: 38px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${product.desc}</p>
+    <div style="margin-top: auto; display: flex; flex-direction: column; gap: 12px;">
+      <div style="display: flex; align-items: baseline; gap: 6px;">
+        <span style="color: #10b981; font-weight: 900; font-size: 30px; line-height: 1;">${product.price}</span>
+        <span style="color: #10b981; font-weight: 900; font-size: 18px;">บาท</span>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+        ${product.shopeeUrl && product.shopeeUrl.trim() !== '' ? `<a href="${product.shopeeUrl}" target="_blank" style="padding: 4px 12px; background: #EE4D2D; color: white; border-radius: 999px; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 11px; font-weight: 900; font-style: italic; min-width: 65px;">Shopee</a>` : ''}
+        ${product.lazadaUrl && product.lazadaUrl.trim() !== '' ? `<a href="${product.lazadaUrl}" target="_blank" style="padding: 4px 12px; background: #101566; color: white; border-radius: 999px; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 11px; font-weight: 900; font-style: italic; min-width: 65px;">Lazada</a>` : ''}
+        ${product.tiktokUrl && product.tiktokUrl.trim() !== '' ? `<a href="${product.tiktokUrl}" target="_blank" style="padding: 4px 12px; background: black; color: white; border-radius: 999px; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 11px; font-weight: 900; font-style: italic; min-width: 65px;">Tiktok</a>` : ''}
+      </div>
+    </div>
+  </div>
+</div>
+    `.trim();
+  };
+
+  const copyIndividualHTML = (product: Product) => {
+    const html = generateStandaloneCardHTML(product);
+    navigator.clipboard.writeText(html).then(() => {
+      showToastMessage('คัดลอกโค้ด HTML สินค้าเรียบร้อย 🚀');
     });
   };
 
-  const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>, isSingle: boolean = false) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const result = await readFile(file);
-      if (isSingle) {
-        setSingleProduct(prev => ({ ...prev, image: result }));
-      } else {
-        setNewGroupProduct(prev => ({ ...prev, image: result }));
-      }
-    }
+  const copyProductLink = (product: Product) => {
+    const shareUrl = `${window.location.origin}${window.location.pathname}?item=${product.id}`;
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      showToastMessage('คัดลอกลิงก์สินค้าเรียบร้อย ✨');
+    });
+  };
+
+  const copyGroupHTML = () => {
+    const cardsHTML = groupProducts.map(p => `
+      <div style="flex: 1; min-width: 280px; max-width: 320px; margin-bottom: 24px;">
+        ${generateStandaloneCardHTML(p)}
+      </div>
+    `).join('');
+
+    const finalHTML = `
+<!-- Standalone Product Showcase Grid -->
+<div style="display: flex; flex-wrap: wrap; gap: 24px; justify-content: center; padding: 32px 16px; background: #f9fafb; font-family: 'Inter', sans-serif;">
+  ${cardsHTML}
+</div>
+    `.trim();
+
+    navigator.clipboard.writeText(finalHTML).then(() => {
+      showToastMessage('คัดลอก HTML ทั้งชุดเรียบร้อย 🚀');
+    });
   };
 
   const handleSingleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setSingleProduct(prev => ({ ...prev, [name]: value }));
+    setNewSingleProduct(prev => ({ ...prev, [name]: value }));
+  };
+
+  const addSingleProduct = () => {
+    if (!newSingleProduct.name || !newSingleProduct.price) {
+      showToastMessage('กรุณากรอกชื่อและราคาให้ครบถ้วน');
+      return;
+    }
+
+    if (editingSingleId !== null) {
+      setSingleProducts(singleProducts.map(p =>
+        p.id === editingSingleId ? { ...p, ...newSingleProduct as Product } : p
+      ));
+      setEditingSingleId(null);
+      showToastMessage('อัปเดตสินค้าไฮไลท์สำเร็จ ✨');
+    } else {
+      const item: Product = {
+        ...newSingleProduct as Product,
+        id: Date.now(),
+      };
+      setSingleProducts([...singleProducts, item]);
+      showToastMessage('เพิ่มสินค้าไฮไลท์สำเร็จ ✨');
+    }
+
+    setNewSingleProduct({
+      image: '', name: '', desc: '', price: '', shopeeUrl: '', lazadaUrl: '', tiktokUrl: ''
+    });
+  };
+
+  const startEditingSingle = (product: Product) => {
+    setEditingSingleId(product.id);
+    setNewSingleProduct({ ...product });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const deleteSingleProduct = (id: number) => {
+    setSingleProducts(singleProducts.filter(p => p.id !== id));
+    showToastMessage('ลบสินค้าไฮไลท์เรียบร้อย');
   };
 
   const handleGroupInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -315,18 +433,36 @@ const App = () => {
     setNewGroupProduct(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>, type: 'single' | 'group') => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const originalResult = await readFile(file);
+      const compressedResult = await compressImage(originalResult);
+      if (type === 'single') {
+        setNewSingleProduct(prev => ({ ...prev, image: compressedResult }));
+      } else {
+        setNewGroupProduct(prev => ({ ...prev, image: compressedResult }));
+      }
+    }
+  };
+
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [focusedProductId, setFocusedProductId] = useState<number | null>(null);
+  const [editingGroupId, setEditingGroupId] = useState<number | null>(null);
+
   const addGroupProduct = () => {
     if (!newGroupProduct.name || !newGroupProduct.price) {
       showToastMessage('กรุณากรอกชื่อและราคาให้ครบถ้วน');
       return;
     }
 
-    if (editingProductId !== null) {
+    if (editingGroupId !== null) {
       // Update
       setGroupProducts(groupProducts.map(p =>
-        p.id === editingProductId ? { ...p, ...newGroupProduct as Product } : p
+        p.id === editingGroupId ? { ...p, ...newGroupProduct as Product } : p
       ));
-      setEditingProductId(null);
+      setEditingGroupId(null);
       showToastMessage('อัปเดตข้อมูลสำเร็จ ✨');
     } else {
       // Create
@@ -346,15 +482,15 @@ const App = () => {
     });
   };
 
-  const startEditing = (product: Product) => {
-    setEditingProductId(product.id);
+  const startEditingGroup = (product: Product) => {
+    setEditingGroupId(product.id);
     setNewGroupProduct({ ...product });
     // Scroll to form for better UX
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const cancelEditing = () => {
-    setEditingProductId(null);
+  const cancelEditingGroup = () => {
+    setEditingGroupId(null);
     setNewGroupProduct({
       image: '', name: '', desc: '', price: '', shopeeUrl: '', lazadaUrl: '', tiktokUrl: ''
     });
@@ -385,24 +521,27 @@ const App = () => {
               <h1 className="font-bold text-xl tracking-tight hidden sm:block">Product<span className="text-red-600">Showcase</span></h1>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-1.5 sm:gap-2">
               <button
                 onClick={() => setViewMode('admin')}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${viewMode === 'admin' ? 'bg-red-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                className={`p-2 sm:px-4 sm:py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${viewMode === 'admin' ? 'bg-red-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                title="จัดการ"
               >
-                <Layout size={18} /> จัดการ
+                <Layout size={18} /> <span className="hidden xs:inline">จัดการ</span>
               </button>
               <button
                 onClick={() => setViewMode('review')}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${viewMode === 'review' ? 'bg-red-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                className={`p-2 sm:px-4 sm:py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${viewMode === 'review' ? 'bg-red-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                title="สินค้าเดี่ยว"
               >
-                <Star size={18} /> หน้ารีวิว
+                <Star size={18} /> <span className="hidden xs:inline">สินค้าเดี่ยว</span>
               </button>
               <button
                 onClick={() => setViewMode('preview')}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${viewMode === 'preview' ? 'bg-red-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                className={`p-2 sm:px-4 sm:py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${viewMode === 'preview' ? 'bg-red-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                title="สินค้ากลุ่ม"
               >
-                <Share2 size={18} /> หน้าพรีวิว
+                <Share2 size={18} /> <span className="hidden xs:inline">สินค้ากลุ่ม</span>
               </button>
             </div>
           </div>
@@ -417,50 +556,84 @@ const App = () => {
             <div className="space-y-6">
               <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
                 <div className="flex items-center justify-between mb-4 border-b pb-3">
-                  <h2 className="text-lg font-bold flex items-center gap-2 text-red-600">
-                    <Edit size={20} /> แก้ไขสินค้าแนะนำ (Single)
+                  <h2 className="text-lg font-bold text-blue-600">
+                    {editingSingleId !== null ? 'แก้ไขสินค้าเดี่ยว' : '+ เพิ่มสินค้าเดี่ยว'}
                   </h2>
-                  <button
-                    onClick={() => copyEmbedCode('single')}
-                    className="text-[10px] font-bold bg-gray-900 text-white px-3 py-1 rounded-full flex items-center gap-1 hover:bg-black transition-all"
-                  >
-                    <Share2 size={12} /> คัดลอก Embed เฉพาะส่วนนี้
-                  </button>
                 </div>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-xs font-bold text-gray-400 uppercase mb-1">รูปสินค้า</label>
-                    <div className="relative group cursor-pointer border-2 border-dashed border-gray-200 rounded-2xl overflow-hidden hover:border-red-400 transition-colors bg-gray-50 h-48 flex flex-col items-center justify-center">
-                      <input type="file" onChange={(e) => handleImageUpload(e, true)} className="absolute inset-0 opacity-0 cursor-pointer z-10" accept="image/*" />
-                      {singleProduct.image ? (
+                    <div className="relative group cursor-pointer border-2 border-dashed border-gray-200 rounded-2xl overflow-hidden hover:border-red-400 transition-colors bg-gray-50 h-32 flex flex-col items-center justify-center">
+                      <input type="file" onChange={(e) => handleImageUpload(e, 'single')} className="absolute inset-0 opacity-0 cursor-pointer z-10" accept="image/*" />
+                      {newSingleProduct.image ? (
                         <div className="relative w-full h-full">
-                          {singleProduct.image.startsWith('data:') ? (
-                            <img src={singleProduct.image} alt={singleProduct.name} className="w-full h-full object-cover" />
+                          {newSingleProduct.image.startsWith('data:') ? (
+                            <img src={newSingleProduct.image} alt="Single" className="w-full h-full object-cover" />
                           ) : (
-                            <Image src={singleProduct.image} alt={singleProduct.name} fill className="object-cover" />
+                            <Image src={newSingleProduct.image} alt="Single" fill className="object-cover" />
                           )}
                         </div>
                       ) : (
-                        <div className="text-gray-400 flex flex-col items-center"><Camera size={24} /><span className="text-xs mt-1">อัปโหลดรูป</span></div>
+                        <div className="text-gray-400 flex flex-col items-center"><Camera size={20} /><span className="text-[10px] mt-1">อัปโหลดรูป</span></div>
                       )}
                     </div>
                   </div>
-                  <input name="name" value={singleProduct.name} onChange={handleSingleInputChange} placeholder="ชื่อสินค้า" className="w-full px-4 py-3 rounded-xl border border-gray-100 focus:ring-2 focus:ring-red-500 outline-none" />
-                  <textarea name="desc" value={singleProduct.desc} onChange={handleSingleInputChange} placeholder="รายละเอียด" className="w-full px-4 py-3 rounded-xl border border-gray-100 focus:ring-2 focus:ring-red-500 outline-none h-20 resize-none" />
-                  <input name="price" value={singleProduct.price} onChange={handleSingleInputChange} placeholder="ราคา" className="w-full px-4 py-3 rounded-xl border border-gray-100 focus:ring-2 focus:ring-red-500 outline-none" />
-                  <div className="space-y-2 pt-2 border-t">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase">ลิ้งก์ร้านค้า</p>
-                    <input name="shopeeUrl" value={singleProduct.shopeeUrl} onChange={handleSingleInputChange} placeholder="Shopee Link" className="w-full px-3 py-2 text-sm rounded-lg border border-orange-100 outline-none" />
-                    <input name="lazadaUrl" value={singleProduct.lazadaUrl} onChange={handleSingleInputChange} placeholder="Lazada Link" className="w-full px-3 py-2 text-sm rounded-lg border border-blue-100 outline-none" />
-                    <input name="tiktokUrl" value={singleProduct.tiktokUrl} onChange={handleSingleInputChange} placeholder="TikTok Link" className="w-full px-3 py-2 text-sm rounded-lg border border-gray-100 outline-none" />
+                  <input name="name" value={newSingleProduct.name || ''} onChange={handleSingleInputChange} placeholder="ชื่อสินค้า" className="w-full px-4 py-2 rounded-xl border border-gray-100 focus:ring-2 focus:ring-red-500 outline-none text-sm" />
+                  <textarea name="desc" value={newSingleProduct.desc || ''} onChange={handleSingleInputChange} placeholder="รายละเอียด" className="w-full px-4 py-2 rounded-xl border border-gray-100 focus:ring-2 focus:ring-red-500 outline-none h-16 resize-none text-sm" />
+                  <input name="price" value={newSingleProduct.price || ''} onChange={handleSingleInputChange} placeholder="ราคา" className="w-full px-4 py-2 rounded-xl border border-gray-100 focus:ring-2 focus:ring-red-500 outline-none text-sm" />
+                  <div className="grid grid-cols-3 gap-2">
+                    <input name="shopeeUrl" value={newSingleProduct.shopeeUrl || ''} onChange={handleSingleInputChange} placeholder="Shopee" className="w-full px-2 py-1.5 text-xs rounded-lg border border-orange-50 outline-none" />
+                    <input name="lazadaUrl" value={newSingleProduct.lazadaUrl || ''} onChange={handleSingleInputChange} placeholder="Lazada" className="w-full px-2 py-1.5 text-xs rounded-lg border border-blue-50 outline-none" />
+                    <input name="tiktokUrl" value={newSingleProduct.tiktokUrl || ''} onChange={handleSingleInputChange} placeholder="TikTok" className="w-full px-2 py-1.5 text-xs rounded-lg border border-gray-50 outline-none" />
                   </div>
 
-                  <button
-                    onClick={saveSingleProduct}
-                    className="w-full bg-red-600 text-white font-bold py-3 rounded-xl hover:bg-red-700 transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transform active:scale-95"
-                  >
-                    <Save size={18} /> บันทึกข้อมูลสินค้าแนะนำ
-                  </button>
+                  {editingSingleId !== null ? (
+                    <div className="flex gap-2">
+                      <button onClick={addSingleProduct} className="flex-1 bg-blue-600 text-white font-bold py-2 rounded-xl hover:bg-blue-700 transition-all text-sm flex items-center justify-center gap-2">
+                        <Save size={16} /> บันทึกแก้ไข
+                      </button>
+                      <button onClick={() => { setEditingSingleId(null); setNewSingleProduct({ image: '', name: '', desc: '', price: '', shopeeUrl: '', lazadaUrl: '', tiktokUrl: '' }); }} className="bg-gray-100 text-gray-500 px-4 py-2 rounded-xl hover:bg-gray-200 transition-all text-sm">
+                        ยกเลิก
+                      </button>
+                    </div>
+                  ) : (
+                    <button onClick={addSingleProduct} className="w-full bg-red-600 text-white font-bold py-3 rounded-xl hover:bg-red-700 transition-all flex items-center justify-center gap-2 shadow-lg active:scale-95">
+                      <Plus size={18} /> เพิ่มสินค้าเดี่ยว
+                    </button>
+                  )}
+                </div>
+
+                {/* Single Products List */}
+                <div className="mt-8 space-y-3">
+                  <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider px-2">รายการสินค้าไฮไลท์ ({singleProducts.length})</h3>
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+                    {singleProducts.map(p => (
+                      <div key={p.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-2xl border border-gray-100 group">
+                        <div className="relative w-10 h-10 flex-shrink-0">
+                          {p.image.startsWith('http') ? (
+                            <Image src={p.image} alt={p.name} fill className="rounded-lg object-cover" />
+                          ) : (
+                            <img src={p.image} alt={p.name} className="w-full h-full rounded-lg object-cover" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-bold text-xs truncate">{p.name}</h4>
+                          <p className="text-[#10b981] font-black text-[10px]">{p.price} บาท</p>
+                        </div>
+                        <div className="flex gap-1">
+                          <button onClick={() => copyIndividualHTML(p)} className="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors" title="คัดลอก HTML">
+                            <Code size={14} />
+                          </button>
+                          <button onClick={() => startEditingSingle(p)} className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors">
+                            <Edit3 size={14} />
+                          </button>
+                          <button onClick={() => deleteSingleProduct(p.id)} className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -469,20 +642,15 @@ const App = () => {
             <div className="space-y-6">
               <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
                 <div className="flex items-center justify-between mb-4 border-b pb-3">
-                  <h2 className="text-lg font-bold flex items-center gap-2 text-red-600">
-                    <Plus size={20} /> เพิ่มสินค้ากลุ่ม (Group)
+                  <h2 className="text-lg font-bold text-red-600">
+                    {editingGroupId !== null ? 'แก้ไขสินค้ากลุ่ม (Group)' : '+ เพิ่มสินค้ากลุ่ม (Group)'}
                   </h2>
-                  <button
-                    onClick={() => copyEmbedCode('group')}
-                    className="text-[10px] font-bold bg-gray-900 text-white px-3 py-1 rounded-full flex items-center gap-1 hover:bg-black transition-all"
-                  >
-                    <Share2 size={12} /> คัดลอก Embed เฉพาะส่วนนี้
-                  </button>
+
                 </div>
                 <div className="space-y-4">
                   <div className="flex flex-col sm:flex-row gap-4">
                     <div className="w-24 h-24 flex-shrink-0 relative group cursor-pointer border-2 border-dashed border-gray-200 rounded-xl overflow-hidden hover:border-red-400 transition-colors bg-gray-50 flex flex-col items-center justify-center">
-                      <input type="file" onChange={(e) => handleImageUpload(e, false)} className="absolute inset-0 opacity-0 cursor-pointer z-10" accept="image/*" />
+                      <input type="file" onChange={(e) => handleImageUpload(e, 'group')} className="absolute inset-0 opacity-0 cursor-pointer z-10" accept="image/*" />
                       {newGroupProduct.image ? (
                         <div className="relative w-full h-full">
                           {newGroupProduct.image.startsWith('data:') ? (
@@ -505,12 +673,12 @@ const App = () => {
                       </div>
                     </div>
                   </div>
-                  {editingProductId !== null ? (
+                  {editingGroupId !== null ? (
                     <div className="flex gap-2">
                       <button onClick={addGroupProduct} className="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-2">
                         <Save size={18} /> บันทึกการแก้ไข
                       </button>
-                      <button onClick={cancelEditing} className="w-1/3 bg-gray-100 text-gray-600 font-bold py-3 rounded-xl hover:bg-gray-200 transition-all flex items-center justify-center gap-2">
+                      <button onClick={cancelEditingGroup} className="w-1/3 bg-gray-100 text-gray-600 font-bold py-3 rounded-xl hover:bg-gray-200 transition-all flex items-center justify-center gap-2">
                         <X size={18} /> ยกเลิก
                       </button>
                     </div>
@@ -521,8 +689,26 @@ const App = () => {
                   )}
                 </div>
 
-                <div className="mt-8">
-                  <h3 className="text-sm font-bold text-gray-500 mb-3 uppercase">รายการสินค้าในกลุ่ม ({groupProducts.length})</h3>
+                <div className="mt-8 space-y-4">
+                  <div className="bg-gradient-to-r from-purple-50 to-white p-4 rounded-3xl border border-purple-100 flex items-center justify-between shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-purple-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
+                        <Layers size={20} />
+                      </div>
+                      <div>
+                        <h4 className="font-black text-gray-900 text-sm">คัดลอกโค้ดทั้งชุด ({groupProducts.length} รายการ)</h4>
+                        <p className="text-[10px] text-gray-500 font-medium">นำไปวางแล้วจะแสดงผลเรียงกันสวยงาม</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={copyGroupHTML}
+                      className="bg-[#8b5cf6] hover:bg-[#7c3aed] text-white px-4 py-2 rounded-2xl text-xs font-bold flex items-center gap-2 transition-all shadow-md hover:shadow-lg active:scale-95"
+                    >
+                      <Code size={16} /> คัดลอก Embed Group
+                    </button>
+                  </div>
+
+                  <h3 className="text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider px-2">รายการสินค้าในกลุ่ม</h3>
                   <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                     {groupProducts.map(p => (
                       <div key={p.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
@@ -538,7 +724,13 @@ const App = () => {
                           <p className="text-red-500 text-xs">{p.price} บาท</p>
                         </div>
                         <div className="flex gap-1">
-                          <button onClick={() => startEditing(p)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors" title="แก้ไข">
+                          <button onClick={() => copyIndividualHTML(p)} className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors" title="คัดลอกโค้ด HTML">
+                            <Code size={16} />
+                          </button>
+                          <button onClick={() => copyProductLink(p)} className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="คัดลอกลิงก์">
+                            <Share2 size={16} />
+                          </button>
+                          <button onClick={() => startEditingGroup(p)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors" title="แก้ไข">
                             <Edit3 size={16} />
                           </button>
                           <button onClick={() => deleteGroupProduct(p.id)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="ลบ">
@@ -556,33 +748,16 @@ const App = () => {
           /* --- REVIEW MODE --- */
           <div className="space-y-8 animate-in fade-in duration-500">
             <div className="text-center space-y-2 relative">
-              <h2 className="text-3xl font-black text-gray-900">หน้ารีวิวสินค้า</h2>
-              <p className="text-gray-500">รวมสินค้าแนะนำที่บันทึกไว้ทั้งหมด</p>
-              {!isEmbed && (
-                <button
-                  onClick={() => copyEmbedCode('review')}
-                  className="absolute top-0 right-0 text-[10px] font-bold bg-gray-900 text-white px-4 py-2 rounded-full flex items-center gap-1 hover:bg-black transition-all shadow-md"
-                >
-                  <Share2 size={14} /> คัดลอก Embed หน้ารีวิว
-                </button>
-              )}
+              <h2 className="text-3xl font-black text-gray-900">สินค้าเดี่ยว</h2>
+              <p className="text-gray-500">รายการสินค้าที่คุณเลือกจากคลังสินค้าไฮไลท์</p>
+
             </div>
 
-            {reviewedProducts.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {reviewedProducts.map((p, index) => (
-                  <div key={p.id} className="relative group">
+            {singleProducts.length > 0 ? (
+              <div className="flex overflow-x-auto pb-10 gap-6 snap-x no-scrollbar px-6 sm:px-0 scroll-smooth -mx-5 sm:mx-0">
+                {singleProducts.map((p) => (
+                  <div key={p.id} className="min-w-[80%] sm:min-w-[320px] snap-center">
                     <ProductCard product={p} onCopy={showToastMessage} />
-                    <button
-                      onClick={() => {
-                        const newReviewed = reviewedProducts.filter((_, i) => i !== index);
-                        setReviewedProducts(newReviewed);
-                        showToastMessage('ลบสินค้าออกจากรีวิวแล้ว');
-                      }}
-                      className="absolute -top-2 -right-2 bg-white text-gray-400 hover:text-red-500 p-1.5 rounded-full shadow-md border border-gray-100 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                    >
-                      <Trash2 size={14} />
-                    </button>
                   </div>
                 ))}
               </div>
@@ -592,8 +767,8 @@ const App = () => {
                   <Star size={32} />
                 </div>
                 <div className="space-y-1">
-                  <p className="font-bold text-gray-900">ยังไม่มีสินค้าในรีวิว</p>
-                  <p className="text-sm text-gray-500">กดปุ่ม "บันทึกข้อมูลสินค้าแนะนำ" ในหน้าจัดการเพื่อเพิ่มสินค้า</p>
+                  <p className="font-bold text-gray-900">ยังไม่มีสินค้าเดี่ยว</p>
+                  <p className="text-sm text-gray-500">เพิ่มสินค้าในหน้าจัดการเพื่อแสดงโชว์ที่นี่</p>
                 </div>
                 <button
                   onClick={() => setViewMode('admin')}
@@ -617,8 +792,8 @@ const App = () => {
               <ChevronLeft size={20} /> ดูสินค้าทั้งหมด
             </button>
             <div className="shadow-2xl rounded-[20px] ring-1 ring-gray-100 overflow-hidden transform scale-105">
-              {singleProduct.id === focusedProductId ? (
-                <ProductCard product={singleProduct} onCopy={showToastMessage} />
+              {singleProducts.find(p => p.id === focusedProductId) ? (
+                <ProductCard product={singleProducts.find(p => p.id === focusedProductId)!} onCopy={showToastMessage} />
               ) : (
                 groupProducts.find(p => p.id === focusedProductId) ? (
                   <ProductCard product={groupProducts.find(p => p.id === focusedProductId)!} onCopy={showToastMessage} />
@@ -635,17 +810,23 @@ const App = () => {
         ) : (
           /* --- PREVIEW MODE: Full Showcase --- */
           <div className="space-y-12 pb-20 animate-in fade-in duration-500">
-            {/* 1. Single Product Section */}
-            {(!embedShow || embedShow === 'single') && (
-              <section className="flex justify-center px-4 sm:px-0">
-                <div className="w-full max-w-sm sm:max-w-md">
-                  <ProductCard product={singleProduct} onCopy={showToastMessage} />
-                </div>
+            <div className="text-center space-y-2 mb-10">
+              <h2 className="text-3xl font-black text-gray-900">สินค้ากลุ่ม</h2>
+              <p className="text-gray-500">แคตตาล็อกสินค้าทั้งหมดในระบบ</p>
+            </div>
+            {/* 1. Single Product Section (Highlight List) - Hidden from Preview by request, only shown if explicitly asked via embed URL */}
+            {(embedShow === 'single') && (
+              <section className="flex flex-col items-center gap-8 py-4">
+                {singleProducts.map(p => (
+                  <div key={p.id} className="w-full max-w-sm sm:max-w-md">
+                    <ProductCard product={p} onCopy={showToastMessage} />
+                  </div>
+                ))}
               </section>
             )}
 
-            {/* Divider */}
-            {(!embedShow) && (
+            {/* Divider (Only if showing all or specific mix, removed for default Group view) */}
+            {(embedShow === 'all') && (
               <div className="flex items-center gap-4 max-w-lg mx-auto px-4 sm:px-0">
                 <div className="h-px bg-gray-200 flex-1"></div>
                 <span className="text-gray-400 text-sm font-bold uppercase tracking-widest px-2 text-center">สินค้าแนะนำอื่นๆ</span>
@@ -655,10 +836,10 @@ const App = () => {
 
             {/* 2. Group Product Section */}
             {(!embedShow || embedShow === 'group') && (
-              <section>
-                <div className="flex sm:grid overflow-x-auto sm:overflow-x-visible gap-4 sm:gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 pb-8 sm:pb-0 snap-x snap-mandatory no-scrollbar px-4 sm:px-0">
+              <section className="px-5 sm:px-0">
+                <div className="flex sm:grid overflow-x-auto sm:overflow-x-visible gap-5 sm:gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 pb-8 sm:pb-0 snap-x snap-mandatory no-scrollbar -mx-5 px-5 sm:mx-0 sm:px-0">
                   {groupProducts.map(p => (
-                    <div key={p.id} className="min-w-[45%] sm:min-w-0 snap-start">
+                    <div key={p.id} className="min-w-[85%] sm:min-w-0 snap-center first:pl-0">
                       <ProductCard product={p} onCopy={showToastMessage} />
                     </div>
                   ))}
