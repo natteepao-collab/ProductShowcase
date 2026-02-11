@@ -148,11 +148,12 @@ const readFile = (file: File): Promise<string> => {
 
 const App = () => {
   // --- State ---
-  const [isEditMode, setIsEditMode] = useState(true);
+  const [viewMode, setViewMode] = useState<'admin' | 'preview' | 'review'>('admin');
   const [editingProductId, setEditingProductId] = useState<number | null>(null);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [focusedProductId, setFocusedProductId] = useState<number | null>(null);
+  const [reviewedProducts, setReviewedProducts] = useState<Product[]>([]);
 
   // 1. Single Product State
   const [singleProduct, setSingleProduct] = useState<Product>({
@@ -206,13 +207,15 @@ const App = () => {
   useEffect(() => {
     const savedSingle = localStorage.getItem('singleProduct');
     const savedGroup = localStorage.getItem('groupProducts');
+    const savedReviewed = localStorage.getItem('reviewedProducts');
     if (savedSingle) setSingleProduct(JSON.parse(savedSingle));
     if (savedGroup) setGroupProducts(JSON.parse(savedGroup));
+    if (savedReviewed) setReviewedProducts(JSON.parse(savedReviewed));
 
     // Check for deep-link on start - if exists, enter preview mode automatically
     const params = new URLSearchParams(window.location.search);
     if (params.get('item')) {
-      setIsEditMode(false);
+      setViewMode('preview');
     }
 
     setIsLoaded(true);
@@ -222,14 +225,19 @@ const App = () => {
     if (isLoaded) {
       localStorage.setItem('singleProduct', JSON.stringify(singleProduct));
       localStorage.setItem('groupProducts', JSON.stringify(groupProducts));
+      localStorage.setItem('reviewedProducts', JSON.stringify(reviewedProducts));
     }
-  }, [singleProduct, groupProducts, isLoaded]);
+  }, [singleProduct, groupProducts, reviewedProducts, isLoaded]);
 
 
   const saveSingleProduct = () => {
-    // Current persistence is handled by useEffect on every change, 
-    // but this button provides explicit feedback and ensures the final state is "committed".
-    showToastMessage('บันทึกข้อมูลสินค้าแนะนำเรียบร้อย ✨');
+    // Append to reviewed products
+    const newReviewedItem: Product = {
+      ...singleProduct,
+      id: Date.now(),
+    };
+    setReviewedProducts(prev => [newReviewedItem, ...prev]);
+    showToastMessage('บันทึกข้อมูลสินค้าแนะนำลงในหน้ารีวิวเรียบร้อย ✨');
   };
 
   // --- Form State for New Group Product ---
@@ -241,7 +249,7 @@ const App = () => {
     if (isLoaded) {
       const urlParams = new URLSearchParams(window.location.search);
       const itemId = urlParams.get('item');
-      if (itemId && !isEditMode) {
+      if (itemId && viewMode === 'preview') {
         const idNum = parseInt(itemId);
         if (!isNaN(idNum)) {
           setFocusedProductId(idNum);
@@ -261,7 +269,7 @@ const App = () => {
         setFocusedProductId(null);
       }
     }
-  }, [isLoaded, isEditMode]);
+  }, [isLoaded, viewMode]);
 
   // --- Handlers ---
 
@@ -358,14 +366,20 @@ const App = () => {
 
           <div className="flex gap-2">
             <button
-              onClick={() => setIsEditMode(true)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${isEditMode ? 'bg-red-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+              onClick={() => setViewMode('admin')}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${viewMode === 'admin' ? 'bg-red-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
             >
               <Layout size={18} /> จัดการ
             </button>
             <button
-              onClick={() => setIsEditMode(false)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${!isEditMode ? 'bg-red-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+              onClick={() => setViewMode('review')}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${viewMode === 'review' ? 'bg-red-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            >
+              <Star size={18} /> หน้ารีวิว
+            </button>
+            <button
+              onClick={() => setViewMode('preview')}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${viewMode === 'preview' ? 'bg-red-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
             >
               <Share2 size={18} /> หน้าพรีวิว
             </button>
@@ -374,7 +388,7 @@ const App = () => {
       </header>
 
       <main className="max-w-6xl mx-auto px-4 py-8">
-        {isEditMode ? (
+        {viewMode === 'admin' ? (
           /* --- ADMIN MODE --- */
           <div className="grid md:grid-cols-2 gap-8 animate-in fade-in duration-500">
             {/* Left Column: Single Product Edit */}
@@ -499,6 +513,50 @@ const App = () => {
                 </div>
               </div>
             </div>
+          </div>
+        ) : viewMode === 'review' ? (
+          /* --- REVIEW MODE --- */
+          <div className="space-y-8 animate-in fade-in duration-500">
+            <div className="text-center space-y-2">
+              <h2 className="text-3xl font-black text-gray-900">หน้ารีวิวสินค้า</h2>
+              <p className="text-gray-500">รวมสินค้าแนะนำที่บันทึกไว้ทั้งหมด</p>
+            </div>
+
+            {reviewedProducts.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {reviewedProducts.map((p, index) => (
+                  <div key={p.id} className="relative group">
+                    <ProductCard product={p} onCopy={showToastMessage} />
+                    <button
+                      onClick={() => {
+                        const newReviewed = reviewedProducts.filter((_, i) => i !== index);
+                        setReviewedProducts(newReviewed);
+                        showToastMessage('ลบสินค้าออกจากรีวิวแล้ว');
+                      }}
+                      className="absolute -top-2 -right-2 bg-white text-gray-400 hover:text-red-500 p-1.5 rounded-full shadow-md border border-gray-100 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-white rounded-3xl p-20 border border-dashed border-gray-200 text-center space-y-4">
+                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto text-gray-300">
+                  <Star size={32} />
+                </div>
+                <div className="space-y-1">
+                  <p className="font-bold text-gray-900">ยังไม่มีสินค้าในรีวิว</p>
+                  <p className="text-sm text-gray-500">กดปุ่ม "บันทึกข้อมูลสินค้าแนะนำ" ในหน้าจัดการเพื่อเพิ่มสินค้า</p>
+                </div>
+                <button
+                  onClick={() => setViewMode('admin')}
+                  className="bg-red-600 text-white px-6 py-2 rounded-full text-sm font-bold shadow-md hover:bg-red-700 transition-all"
+                >
+                  ไปหน้าจัดการ
+                </button>
+              </div>
+            )}
           </div>
         ) : focusedProductId ? (
           /* --- FOCUSED MODE: Isolated Item --- */
