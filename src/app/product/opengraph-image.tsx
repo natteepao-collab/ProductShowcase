@@ -61,51 +61,33 @@ export default async function Image(props: { searchParams: { data?: string } }) 
                     height: '100%',
                     width: '100%',
                     display: 'flex',
-                    flexDirection: 'row',
+                    flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
                     backgroundColor: '#f9fafb',
-                    padding: '40px',
+                    padding: '20px',
                 }}
             >
                 <div
                     style={{
                         display: 'flex',
-                        flexDirection: 'row',
+                        flexDirection: 'column',
                         backgroundColor: 'white',
-                        borderRadius: '40px',
+                        borderRadius: '48px',
                         overflow: 'hidden',
                         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-                        width: '1000px',
-                        height: '500px',
+                        width: '420px',
+                        height: '590px',
                         border: '1px solid #f3f4f6',
+                        position: 'relative',
                     }}
                 >
-                    {/* Badge */}
-                    <div
-                        style={{
-                            position: 'absolute',
-                            top: '30px',
-                            left: '30px',
-                            backgroundColor: '#dc2626',
-                            color: 'white',
-                            fontSize: '14px',
-                            fontWeight: 900,
-                            padding: '6px 16px',
-                            borderRadius: '20px',
-                            zIndex: 10,
-                            textTransform: 'uppercase',
-                        }}
-                    >
-                        Highlight
-                    </div>
-
-                    {/* Left: Image Area */}
+                    {/* Image Area */}
                     <div
                         style={{
                             display: 'flex',
-                            width: '500px',
-                            height: '500px',
+                            width: '420px',
+                            height: '320px',
                             backgroundColor: '#f9fafb',
                         }}
                     >
@@ -120,58 +102,58 @@ export default async function Image(props: { searchParams: { data?: string } }) 
                         />
                     </div>
 
-                    {/* Right: Content Area */}
+                    {/* Content Area */}
                     <div
                         style={{
                             display: 'flex',
                             flexDirection: 'column',
-                            padding: '40px',
-                            width: '500px',
-                            justifyContent: 'space-between',
+                            padding: '24px 28px',
+                            flex: 1,
                         }}
                     >
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                            <div
-                                style={{
-                                    fontSize: '36px',
-                                    fontWeight: 900,
-                                    color: '#111827',
-                                    lineHeight: '1.1',
-                                    marginBottom: '15px',
-                                }}
-                            >
-                                {product.name}
-                            </div>
-                            <div
-                                style={{
-                                    fontSize: '18px',
-                                    color: '#6b7280',
-                                    lineHeight: '1.4',
-                                }}
-                            >
-                                {product.desc}
-                            </div>
+                        <div
+                            style={{
+                                fontSize: '28px',
+                                fontWeight: 900,
+                                color: '#111827',
+                                lineHeight: '1.2',
+                                marginBottom: '8px',
+                                display: 'flex',
+                            }}
+                        >
+                            {product.name}
+                        </div>
+                        <div
+                            style={{
+                                fontSize: '14px',
+                                color: '#6b7280',
+                                lineHeight: '1.4',
+                                marginBottom: '15px',
+                                display: 'flex',
+                            }}
+                        >
+                            {product.desc}
                         </div>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                            <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
-                                <span style={{ fontSize: '56px', fontWeight: 900, color: '#16a34a' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', marginTop: 'auto' }}>
+                            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '15px' }}>
+                                <span style={{ fontSize: '42px', fontWeight: 900, color: '#4ade80' }}>
                                     {product.price}
                                 </span>
-                                <span style={{ fontSize: '24px', fontWeight: 900, color: '#16a34a' }}>
+                                <span style={{ fontSize: '20px', fontWeight: 900, color: '#4ade80' }}>
                                     บาท
                                 </span>
                             </div>
 
                             <div style={{ display: 'flex', gap: '8px' }}>
                                 {product.shopeeUrl && (
-                                    <div style={{ background: '#EE4D2D', padding: '10px 20px', borderRadius: '30px', color: 'white', fontSize: '14px', fontWeight: 900 }}>Shopee</div>
+                                    <div style={{ background: '#EE4D2D', padding: '6px 16px', borderRadius: '30px', color: 'white', fontSize: '11px', fontWeight: 900, fontStyle: 'italic' }}>Shopee</div>
                                 )}
                                 {product.lazadaUrl && (
-                                    <div style={{ background: '#101566', padding: '10px 20px', borderRadius: '30px', color: 'white', fontSize: '14px', fontWeight: 900 }}>Lazada</div>
+                                    <div style={{ background: '#101566', padding: '6px 16px', borderRadius: '30px', color: 'white', fontSize: '11px', fontWeight: 900, fontStyle: 'italic' }}>Lazada</div>
                                 )}
                                 {product.tiktokUrl && (
-                                    <div style={{ background: 'black', padding: '10px 20px', borderRadius: '30px', color: 'white', fontSize: '14px', fontWeight: 900 }}>TikTok</div>
+                                    <div style={{ background: 'black', padding: '6px 16px', borderRadius: '30px', color: 'white', fontSize: '11px', fontWeight: 900, fontStyle: 'italic' }}>TikTok</div>
                                 )}
                             </div>
                         </div>
