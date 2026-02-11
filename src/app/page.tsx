@@ -53,61 +53,64 @@ const ProductCard = ({ product, onCopy }: { product: Product, onCopy?: (msg: str
   return (
     <div
       id={`product-${product.id}`}
-      className="bg-white rounded-[20px] overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 border border-gray-100 flex flex-col h-full group hover:-translate-y-1"
+      className="bg-white rounded-[32px] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col h-full group hover:-translate-y-1"
     >
       {/* Image Area */}
-      <div className="relative aspect-[4/3] bg-gray-50 flex items-center justify-center overflow-hidden">
-        {product.image.startsWith('http') ? (
-          <Image
-            src={product.image}
-            alt={product.name}
-            fill
-            className="object-cover group-hover:scale-105 transition-transform duration-500"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          />
-        ) : (
-          <img
-            src={product.image}
-            alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
-        )}
+      <div className="relative aspect-square p-4 bg-white flex items-center justify-center overflow-hidden">
+        <div className="relative w-full h-full rounded-3xl overflow-hidden">
+          {product.image.startsWith('http') ? (
+            <Image
+              src={product.image}
+              alt={product.name}
+              fill
+              className="object-cover group-hover:scale-105 transition-transform duration-500"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            />
+          ) : (
+            <img
+              src={product.image}
+              alt={product.name}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+          )}
+        </div>
         <button
           onClick={copyToClipboard}
-          className="absolute top-2 right-2 p-2 bg-white/80 backdrop-blur-sm rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"
+          className="absolute top-6 right-6 p-2 bg-white/80 backdrop-blur-sm rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10 shadow-sm"
         >
           {copied ? <CheckCircle2 size={16} className="text-green-600" /> : <Share2 size={16} className="text-gray-600" />}
         </button>
       </div>
 
       {/* Content Area */}
-      <div className="p-4 flex flex-col flex-1">
-        <h3 className="font-bold text-gray-900 text-lg leading-tight mb-1 line-clamp-2">
+      <div className="px-6 pb-6 pt-2 flex flex-col flex-1">
+        <h3 className="font-black text-gray-900 text-xl leading-tight mb-2 line-clamp-2 min-h-[3rem]">
           {product.name}
         </h3>
-        <p className="text-gray-500 text-xs mb-3 line-clamp-2 h-8">
+        <p className="text-gray-400 text-sm mb-4 line-clamp-2 h-10 leading-relaxed">
           {product.desc}
         </p>
 
-        <div className="mt-auto">
-          <p className="text-[#4ade80] font-bold text-xl mb-3">
-            {product.price} บาท
-          </p>
+        <div className="mt-auto space-y-4">
+          <div className="flex flex-col">
+            <span className="text-[#4ade80] font-black text-3xl leading-none">
+              {product.price}
+            </span>
+            <span className="text-[#4ade80] font-bold text-xl mt-1">
+              บาท
+            </span>
+          </div>
 
-          <div className={`grid gap-1 ${[product.shopeeUrl, product.lazadaUrl, product.tiktokUrl].filter(Boolean).length === 3
-            ? 'grid-cols-3'
-            : [product.shopeeUrl, product.lazadaUrl, product.tiktokUrl].filter(Boolean).length === 2
-              ? 'grid-cols-2'
-              : 'grid-cols-1'
-            }`}>
+          <div className="flex flex-wrap gap-2">
             {product.shopeeUrl && (
               <a
                 href={product.shopeeUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="bg-[#EE4D2D] text-white text-[8px] md:text-xs font-bold py-1.5 px-0.5 rounded-full text-center hover:opacity-90 transition-opacity shadow-sm"
+                className="w-10 h-10 bg-[#EE4D2D] text-white rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-sm"
+                title="Shopee"
               >
-                Shopee
+                <span className="text-[10px] font-black italic">Shopee</span>
               </a>
             )}
             {product.lazadaUrl && (
@@ -115,9 +118,10 @@ const ProductCard = ({ product, onCopy }: { product: Product, onCopy?: (msg: str
                 href={product.lazadaUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="bg-[#101566] text-white text-[8px] md:text-xs font-bold py-1.5 px-0.5 rounded-full text-center hover:opacity-90 transition-opacity shadow-sm"
+                className="w-10 h-10 bg-[#101566] text-white rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-sm"
+                title="Lazada"
               >
-                Lazada
+                <span className="text-[10px] font-black italic">Laz</span>
               </a>
             )}
             {product.tiktokUrl && (
@@ -125,9 +129,10 @@ const ProductCard = ({ product, onCopy }: { product: Product, onCopy?: (msg: str
                 href={product.tiktokUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="bg-black text-white text-[8px] md:text-xs font-bold py-1.5 px-0.5 rounded-full text-center hover:opacity-90 transition-opacity shadow-sm"
+                className="w-10 h-10 bg-black text-white rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-sm"
+                title="Tiktok"
               >
-                Tiktok
+                <span className="text-[10px] font-black italic">Tik</span>
               </a>
             )}
           </div>
@@ -154,6 +159,12 @@ const App = () => {
   const [toastMessage, setToastMessage] = useState('');
   const [focusedProductId, setFocusedProductId] = useState<number | null>(null);
   const [reviewedProducts, setReviewedProducts] = useState<Product[]>([]);
+  const [isEmbed, setIsEmbed] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setIsEmbed(params.get('embed') === 'true');
+  }, []);
 
   // 1. Single Product State
   const [singleProduct, setSingleProduct] = useState<Product>({
@@ -271,7 +282,13 @@ const App = () => {
     }
   }, [isLoaded, viewMode]);
 
-  // --- Handlers ---
+  const copyEmbedCode = () => {
+    const embedUrl = `${window.location.origin}${window.location.pathname}?embed=true`;
+    const iframeCode = `<iframe src="${embedUrl}" width="100%" height="600" frameborder="0" style="border:none; overflow:hidden;" scrolling="no"></iframe>`;
+    navigator.clipboard.writeText(iframeCode).then(() => {
+      showToastMessage('คัดลอก Embed Code เรียบร้อย 🚀 นำไปวางในหน้าบทความได้เลย');
+    });
+  };
 
   const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>, isSingle: boolean = false) => {
     const file = e.target.files?.[0];
@@ -355,48 +372,58 @@ const App = () => {
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-gray-900 pb-20">
       {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-50 shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center text-white shadow-lg">
-              <ShoppingBag size={24} />
+      {!isEmbed && (
+        <header className="bg-white border-b sticky top-0 z-50 shadow-sm">
+          <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center text-white shadow-lg">
+                <ShoppingBag size={24} />
+              </div>
+              <h1 className="font-bold text-xl tracking-tight hidden sm:block">Product<span className="text-red-600">Showcase</span></h1>
             </div>
-            <h1 className="font-bold text-xl tracking-tight hidden sm:block">Product<span className="text-red-600">Showcase</span></h1>
-          </div>
 
-          <div className="flex gap-2">
-            <button
-              onClick={() => setViewMode('admin')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${viewMode === 'admin' ? 'bg-red-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-            >
-              <Layout size={18} /> จัดการ
-            </button>
-            <button
-              onClick={() => setViewMode('review')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${viewMode === 'review' ? 'bg-red-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-            >
-              <Star size={18} /> หน้ารีวิว
-            </button>
-            <button
-              onClick={() => setViewMode('preview')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${viewMode === 'preview' ? 'bg-red-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-            >
-              <Share2 size={18} /> หน้าพรีวิว
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setViewMode('admin')}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${viewMode === 'admin' ? 'bg-red-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+              >
+                <Layout size={18} /> จัดการ
+              </button>
+              <button
+                onClick={() => setViewMode('review')}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${viewMode === 'review' ? 'bg-red-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+              >
+                <Star size={18} /> หน้ารีวิว
+              </button>
+              <button
+                onClick={() => setViewMode('preview')}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${viewMode === 'preview' ? 'bg-red-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+              >
+                <Share2 size={18} /> หน้าพรีวิว
+              </button>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
+      )}
 
-      <main className="max-w-6xl mx-auto px-4 py-8">
+      <main className={`max-w-6xl mx-auto px-4 ${isEmbed ? 'py-2' : 'py-8'}`}>
         {viewMode === 'admin' ? (
           /* --- ADMIN MODE --- */
           <div className="grid md:grid-cols-2 gap-8 animate-in fade-in duration-500">
             {/* Left Column: Single Product Edit */}
             <div className="space-y-6">
               <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                <h2 className="text-lg font-bold mb-4 flex items-center gap-2 border-b pb-3 text-red-600">
-                  <Edit size={20} /> แก้ไขสินค้าแนะนำ (Product Single)
-                </h2>
+                <div className="flex items-center justify-between mb-4 border-b pb-3">
+                  <h2 className="text-lg font-bold flex items-center gap-2 text-red-600">
+                    <Edit size={20} /> แก้ไขสินค้าแนะนำ (Single)
+                  </h2>
+                  <button
+                    onClick={copyEmbedCode}
+                    className="text-[10px] font-bold bg-gray-900 text-white px-3 py-1 rounded-full flex items-center gap-1 hover:bg-black transition-all"
+                  >
+                    <Share2 size={12} /> คัดลอก Embed Code
+                  </button>
+                </div>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-xs font-bold text-gray-400 uppercase mb-1">รูปสินค้า</label>
